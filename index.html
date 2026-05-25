@@ -2,103 +2,52 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NetGamer MX | Acceso</title>
+    <title>NetGamer MX | Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #0a0a0a; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .box { 
-            background: #1a1a1a; 
-            padding: 40px; 
-            border-radius: 15px; 
-            width: 320px; 
-            text-align: center; 
-            border: 1px solid #333; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        h2 { color: #ff9900; margin-bottom: 20px; }
-        input { 
-            width: 100%; 
-            margin: 10px 0; 
-            padding: 12px; 
-            border-radius: 5px; 
-            border: 1px solid #444; 
-            background: #000; 
-            color: white; 
-            box-sizing: border-box; 
-        }
-        button { 
-            width: 100%; 
-            padding: 12px; 
-            background: #ff9900; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-top: 10px; 
-            transition: 0.3s;
-        }
-        button:hover { background: #e68a00; }
-        button.secondary { background: #333; }
-        button.secondary:hover { background: #444; }
+        body { font-family: sans-serif; background: #0a0a0a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1a1a1a; padding: 30px; border-radius: 10px; width: 300px; text-align: center; }
+        input { width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #00ffcc; border: none; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
-
     <div class="box">
         <h2>NetGamer MX</h2>
-        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="email" id="email" placeholder="Correo">
         <input type="password" id="password" placeholder="Contraseña">
-        <button onclick="authAction('signup')">Registrarse</button>
-        <button class="secondary" onclick="authAction('login')">Iniciar Sesión</button>
+        <button onclick="handleAuth('signup')">Registrarse</button>
+        <button onclick="handleAuth('login')" style="background:#555;">Iniciar Sesión</button>
     </div>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-        const supabase = createClient(
+    <script>
+        // Inicialización única y segura
+        const supabase = supabase.createClient(
             'https://meiwuluwrdjszxeyoqtt.supabase.co', 
             'sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4'
         );
 
-        // Hacemos que la función sea global para el onclick del botón
-        window.authAction = async function(type) {
+        async function handleAuth(type) {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            if(!email || !password) {
-                alert("Por favor, rellena todos los campos.");
-                return;
-            }
 
-            let result;
-            if (type === 'signup') {
-                result = await supabase.auth.signUp({ email, password });
-            } else {
-                result = await supabase.auth.signInWithPassword({ email, password });
-            }
-
-            const { data, error } = result;
-            
-            if (error) {
-                alert("Error: " + error.message);
-            } else {
+            try {
+                let result;
                 if (type === 'signup') {
-                    alert("¡Registro exitoso! Revisa tu correo electrónico para confirmar.");
+                    result = await supabase.auth.signUp({ email, password });
                 } else {
-                    alert("¡Bienvenido a NetGamer MX!");
-                    window.location.href = 'ofertas.html';
+                    result = await supabase.auth.signInWithPassword({ email, password });
                 }
+
+                if (result.error) throw result.error;
+                
+                alert(type === 'signup' ? "Registro exitoso." : "¡Bienvenido!");
+                if (type === 'login') window.location.href = 'ofertas.html';
+            } catch (err) {
+                alert("Error: " + err.message);
+                console.error("Error completo:", err);
             }
-        };
+        }
     </script>
 </body>
 </html>
