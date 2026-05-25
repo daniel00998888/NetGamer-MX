@@ -21,8 +21,8 @@
     </div>
 
     <script>
-        // Inicialización única y segura
-        const supabase = supabase.createClient(
+        // CAMBIO CLAVE: Usamos 'supabaseClient' en lugar de 'supabase'
+        const supabaseClient = supabase.createClient(
             'https://meiwuluwrdjszxeyoqtt.supabase.co', 
             'sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4'
         );
@@ -34,9 +34,11 @@
             try {
                 let result;
                 if (type === 'signup') {
-                    result = await supabase.auth.signUp({ email, password });
+                    // Usamos supabaseClient aquí
+                    result = await supabaseClient.auth.signUp({ email, password });
                 } else {
-                    result = await supabase.auth.signInWithPassword({ email, password });
+                    // Y usamos supabaseClient aquí
+                    result = await supabaseClient.auth.signInWithPassword({ email, password });
                 }
 
                 if (result.error) throw result.error;
@@ -45,7 +47,7 @@
                 if (type === 'login') window.location.href = 'ofertas.html';
             } catch (err) {
                 alert("Error: " + err.message);
-                console.error("Error completo:", err);
+                console.error("Detalle del error:", err);
             }
         }
     </script>
