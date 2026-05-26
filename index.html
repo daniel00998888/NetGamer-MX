@@ -27,7 +27,7 @@
                 <form id="login-form" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Correo Electrónico</label>
-                        <input type="top-email" id="login-email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 transition" required>
+                        <input type="email" id="login-email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 transition" required>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña</label>
@@ -417,7 +417,7 @@
 
             // 1. Reglas Financieras de Negocio Obligatorias
             if (montoMXN < 100 || montoMXN > 3000) {
-                alert("Error de límites: La regulación exige transacciones de mínimo 100 MXN y máximo 3000 MXN.");
+                alert("Error de límites: La plataforma exige transacciones de mínimo 100 MXN y máximo 3000 MXN.");
                 return;
             }
 
