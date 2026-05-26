@@ -668,49 +668,131 @@
             }
         }
 
-        // ─── RETIRO ──────────────────────────────────────────────────────
+        // ─── RETIRO AUTOMÁTICO (llama a la Edge Function) ────────────────
         async function procesarSolicitudRetiro() {
-            if (!metodoSeleccionado) { alert("Por favor selecciona un método de canje."); return; }
+            if (!metodoSeleccionado) { mostrarToast("⚠️ Selecciona un método de canje.", "warn"); return; }
 
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) return;
 
-            const user      = session.user;
-            const montoMXN  = parseInt(document.getElementById("modal-monto").value);
-            const banco     = document.getElementById("modal-banco").value.trim();
+            const montoMXN     = parseInt(document.getElementById("modal-monto").value);
+            const banco        = document.getElementById("modal-banco").value.trim();
             const beneficiario = document.getElementById("modal-beneficiario").value.trim();
-            const destino   = document.getElementById("modal-destino").value.trim();
-            const costoNC   = montoMXN * CONVERSION_RATE;
+            const destino      = document.getElementById("modal-destino").value.trim();
 
             if (montoMXN < 100 || montoMXN > 3000) {
-                alert("Monto fuera de rango: mínimo $100 MXN, máximo $3,000 MXN."); return;
+                mostrarToast("❌ Monto fuera de rango: mínimo $100 MXN, máximo $3,000 MXN.", "error"); return;
             }
             if (!banco || !beneficiario || !destino) {
-                alert("Completa todos los campos requeridos."); return;
+                mostrarToast("❌ Completa todos los campos requeridos.", "error"); return;
             }
 
-            const { data: perfil } = await _supabase.from('perfiles').select('netcoins').eq('id', user.id).single();
-            if (!perfil || perfil.netcoins < costoNC) {
-                alert(`Fondos insuficientes: necesitas ${costoNC.toLocaleString()} NC. Tienes ${(perfil?.netcoins || 0).toLocaleString()} NC.`); return;
+            // UI: estado de carga
+            const btnSubmit = document.querySelector("#form-modal-retiro button[type='submit']");
+            const textoOriginal = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Procesando pago...`;
+
+            try {
+                // ── Llamada a la Edge Function ──────────────────────────
+                const res = await fetch(
+                    `${SUPABASE_URL}/functions/v1/procesar-retiro`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":  "application/json",
+                            "Authorization": `Bearer ${session.access_token}`,
+                            "apikey":        SUPABASE_KEY,
+                        },
+                        body: JSON.stringify({
+                            metodo:       metodoSeleccionado,
+                            monto_mxn:    montoMXN,
+                            destino:      destino,
+                            banco:        banco,
+                            beneficiario: beneficiario,
+                        }),
+                    }
+                );
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    mostrarToast(`❌ ${data.error || "Error al procesar el pago."}`, "error");
+                    return;
+                }
+
+                // ── Éxito: mostrar resultado según el método ────────────
+                cerrarModal();
+
+                if (metodoSeleccionado === "Roblox" && data.datos?.codigo) {
+                    mostrarModalCodigo(data.datos.codigo, data.datos.pin);
+                } else {
+                    mostrarToast(`✅ ¡Pago enviado! ${data.mensaje}`, "success", 6000);
+                }
+
+            } catch (err) {
+                mostrarToast("❌ Error de red. Verifica tu conexión.", "error");
+                console.error(err);
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = textoOriginal;
             }
+        }
 
-            const { error: errInsert } = await _supabase.from('retiros_pendientes').insert([{
-                user_id: user.id,
-                monto_mxn: montoMXN,
-                netcoins_deducidos: costoNC,
-                banco_plataforma: banco,
-                nombre_beneficiario: beneficiario,
-                cuenta_destino: destino,
-                tipo_premio: metodoSeleccionado,
-                estatus: 'Pendiente de Validación'
-            }]);
+        // ─── MODAL ESPECIAL PARA MOSTRAR CÓDIGO ROBUX ───────────────────
+        function mostrarModalCodigo(codigo, pin) {
+            const overlay = document.createElement("div");
+            overlay.className = "fixed inset-0 bg-black/80 z-[100] flex items-center justify-center px-4";
+            overlay.style.backdropFilter = "blur(8px)";
+            overlay.innerHTML = `
+                <div class="bg-slate-800 border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl shadow-purple-500/20">
+                    <div class="text-5xl mb-4">🎮</div>
+                    <h3 class="text-xl font-extrabold text-white mb-1">¡Tu código Robux!</h3>
+                    <p class="text-slate-400 text-sm mb-6">Canjéalo en <strong class="text-white">roblox.com/redeem</strong></p>
+                    
+                    <div class="bg-slate-900 border border-purple-500/40 rounded-xl p-4 mb-3">
+                        <p class="text-xs text-slate-400 mb-1 uppercase tracking-wider">Código PIN</p>
+                        <p class="font-mono text-2xl font-black text-amber-300 tracking-widest select-all">${codigo}</p>
+                    </div>
+                    ${pin ? `<div class="bg-slate-900 border border-slate-700 rounded-xl p-3 mb-6">
+                        <p class="text-xs text-slate-400 mb-1 uppercase tracking-wider">PIN de Seguridad</p>
+                        <p class="font-mono text-lg font-bold text-purple-300 tracking-widest select-all">${pin}</p>
+                    </div>` : ""}
+                    
+                    <button onclick="navigator.clipboard.writeText('${codigo}').then(()=>mostrarToast('✅ Código copiado','success'))"
+                        class="w-full bg-purple-600 hover:bg-purple-700 font-bold py-3 rounded-xl mb-3 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i> Copiar Código
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()"
+                        class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-3 rounded-xl transition text-sm text-slate-300">
+                        Cerrar
+                    </button>
+                    <p class="text-xs text-red-400 mt-4">⚠️ Guarda este código. No lo recuperarás si cierras sin copiarlo.</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
 
-            if (errInsert) { alert("Error al registrar retiro: " + errInsert.message); return; }
-
-            await _supabase.from('perfiles').update({ netcoins: perfil.netcoins - costoNC }).eq('id', user.id);
-
-            cerrarModal();
-            alert(`✅ ¡Solicitud enviada! Se procesará tu canje de $${montoMXN} MXN vía ${metodoSeleccionado}.`);
+        // ─── SISTEMA DE NOTIFICACIONES TOAST ────────────────────────────
+        function mostrarToast(mensaje, tipo = "info", duracion = 4000) {
+            const colores = {
+                success: "bg-emerald-600 border-emerald-500",
+                error:   "bg-red-900 border-red-500",
+                warn:    "bg-amber-900 border-amber-500",
+                info:    "bg-slate-700 border-slate-500",
+            };
+            const toast = document.createElement("div");
+            toast.className = `fixed top-6 right-6 z-[200] px-5 py-4 rounded-2xl border shadow-2xl text-sm font-semibold max-w-sm
+                ${colores[tipo]} transition-all duration-300 opacity-0 translate-y-2`;
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove("opacity-0", "translate-y-2");
+            });
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, duracion);
         }
 
         async function cerrarSesion() {
