@@ -388,7 +388,7 @@
 
     <script>
         const SUPABASE_URL = "https://meiwuluwrdjszxeyoqtt.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4";
+        const SUPABASE_KEY = "PEGAR_AQUI_TU_CLAVE_ANON_DE_SUPABASE";
         const CONVERSION_RATE = 100;
         const NC_POR_REFERIDO = 500;
         const BASE_URL = "https://daniel00998888.github.io/NetGamer-MX/";
@@ -566,6 +566,24 @@
 
         async function procesarBonoReferido(nuevoUserId, referidorId) {
             try {
+                // Evitar darse referido a sí mismo
+                if (nuevoUserId === referidorId) return;
+
+                // Verificar si este referido ya fue procesado antes
+                const { data: yaExiste } = await _supabase
+                    .from('referidos')
+                    .select('id')
+                    .eq('referidor_id', referidorId)
+                    .eq('referido_id', nuevoUserId)
+                    .single();
+
+                if (yaExiste) {
+                    // Ya se procesó, limpiar storage y salir
+                    sessionStorage.removeItem('ref_code');
+                    sessionStorage.removeItem('ref_pending_user');
+                    return;
+                }
+
                 // Dar 500 NC al nuevo usuario
                 const { data: perfilNuevo } = await _supabase.from('perfiles').select('netcoins').eq('id', nuevoUserId).single();
                 if (perfilNuevo) {
@@ -587,6 +605,11 @@
                     referido_id: nuevoUserId,
                     nc_otorgados: NC_POR_REFERIDO
                 }]);
+
+                // Limpiar storage definitivamente
+                sessionStorage.removeItem('ref_code');
+                sessionStorage.removeItem('ref_pending_user');
+
             } catch(err) {
                 console.error("Error procesando bono referido:", err);
             }
@@ -597,11 +620,12 @@
             if (session) {
                 currentUser = session.user;
 
-                // Procesar bono de referido pendiente si existe
+                // Procesar bono de referido pendiente solo si es primera vez
                 const refCode = sessionStorage.getItem('ref_code');
-                const refPendingUser = sessionStorage.getItem('ref_pending_user');
-                if (refCode && (refPendingUser === currentUser.id || !refPendingUser)) {
+                if (refCode && refCode !== currentUser.id) {
                     await procesarBonoReferido(currentUser.id, refCode);
+                } else {
+                    // Limpiar aunque no se procese
                     sessionStorage.removeItem('ref_code');
                     sessionStorage.removeItem('ref_pending_user');
                 }
