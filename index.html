@@ -61,11 +61,29 @@
                         <i class="fa-solid fa-user-plus text-purple-400"></i>
                         <span>¡Fuiste invitado por un amigo! Ambos recibirán <strong>500 NetCoins</strong> al registrarte.</span>
                     </div>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition duration-200">Registrarse</button>
+                    <button type="submit" id="btn-registrarse" class="w-full bg-emerald-600 hover:bg-emerald-700 font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition duration-200">Registrarse</button>
                 </form>
                 <p class="text-center text-sm text-slate-400 mt-6">
                     ¿Ya tienes cuenta? <button type="button" onclick="toggleAuthViews(true)" class="text-purple-400 hover:underline font-semibold focus:outline-none">Inicia Sesión</button>
                 </p>
+            </div>
+
+            <!-- Pantalla de verificación de email -->
+            <div id="verify-email-view" class="hidden text-center space-y-4">
+                <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
+                    <i class="fa-solid fa-envelope-circle-check text-emerald-400 text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold">¡Revisa tu correo!</h2>
+                <p class="text-slate-400 text-sm">Te enviamos un enlace de confirmación a:</p>
+                <p id="verify-email-address" class="text-white font-bold text-sm bg-slate-900 px-4 py-2 rounded-xl border border-slate-700"></p>
+                <p class="text-slate-400 text-xs">Haz clic en el enlace del correo para activar tu cuenta. Revisa también tu carpeta de <strong class="text-slate-300">spam</strong>.</p>
+                <div class="bg-amber-900/20 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-start gap-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>Tu cuenta <strong>no estará activa</strong> hasta que confirmes tu correo. Esto evita el uso de correos falsos.</span>
+                </div>
+                <button onclick="toggleAuthViews(true)" class="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-3 rounded-xl transition text-sm mt-2">
+                    Volver al Login
+                </button>
             </div>
         </div>
     </div>
@@ -383,6 +401,14 @@
         function toggleAuthViews(showLogin) {
             document.getElementById("login-view").classList.toggle("hidden", !showLogin);
             document.getElementById("register-view").classList.toggle("hidden", showLogin);
+            document.getElementById("verify-email-view").classList.add("hidden");
+        }
+
+        function mostrarPantallaVerificacion(email) {
+            document.getElementById("login-view").classList.add("hidden");
+            document.getElementById("register-view").classList.add("hidden");
+            document.getElementById("verify-email-view").classList.remove("hidden");
+            document.getElementById("verify-email-address").innerText = email;
         }
 
         function configurarEventosAuth() {
@@ -401,22 +427,27 @@
                 const email = document.getElementById("register-email").value;
                 const password = document.getElementById("register-password").value;
                 const refCodeGuardado = sessionStorage.getItem('ref_code');
+                const btn = document.getElementById("btn-registrarse");
+
+                btn.disabled = true;
+                btn.innerText = "Creando cuenta...";
 
                 const { data, error } = await _supabase.auth.signUp({
                     email, password,
                     options: { data: { username: username, referred_by: refCodeGuardado || null } }
                 });
 
+                btn.disabled = false;
+                btn.innerText = "Registrarse";
+
                 if (error) { alert("Error al registrarse: " + error.message); return; }
 
-                // Si vino referido, procesar bonos
-                if (refCodeGuardado && data.user) {
-                    await procesarBonoReferido(data.user.id, refCodeGuardado);
-                    sessionStorage.removeItem('ref_code');
+                // Guardar ref para procesar cuando confirme el email
+                if (refCodeGuardado) {
+                    sessionStorage.setItem('ref_pending_user', data.user?.id || '');
                 }
 
-                alert("¡Cuenta configurada! Ya puedes iniciar sesión.");
-                toggleAuthViews(true);
+                mostrarPantallaVerificacion(email);
             });
 
             document.getElementById("form-solicitud-retiro").addEventListener("submit", (e) => {
@@ -457,6 +488,16 @@
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
                 currentUser = session.user;
+
+                // Procesar bono de referido pendiente si existe
+                const refCode = sessionStorage.getItem('ref_code');
+                const refPendingUser = sessionStorage.getItem('ref_pending_user');
+                if (refCode && (refPendingUser === currentUser.id || !refPendingUser)) {
+                    await procesarBonoReferido(currentUser.id, refCode);
+                    sessionStorage.removeItem('ref_code');
+                    sessionStorage.removeItem('ref_pending_user');
+                }
+
                 document.getElementById("auth-container").classList.add("hidden");
                 document.getElementById("app-container").classList.remove("hidden");
                 document.getElementById("user-display-name").innerText = currentUser.user_metadata.username || currentUser.email;
