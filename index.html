@@ -11,10 +11,12 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         iframe { width: 100%; height: calc(100vh - 220px); border: none; }
+        .copy-feedback { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
 
+    <!-- ==================== AUTH ==================== -->
     <div id="auth-container" class="flex items-center justify-center min-h-screen px-4">
         <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700">
             <div class="text-center mb-8">
@@ -55,6 +57,10 @@
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña</label>
                         <input type="password" id="register-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 transition" required>
                     </div>
+                    <div id="referido-detectado" class="hidden bg-purple-900/30 border border-purple-500/40 rounded-xl px-4 py-2.5 text-xs text-purple-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-plus text-purple-400"></i>
+                        <span>¡Fuiste invitado por un amigo! Ambos recibirán <strong>500 NetCoins</strong> al registrarte.</span>
+                    </div>
                     <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition duration-200">Registrarse</button>
                 </form>
                 <p class="text-center text-sm text-slate-400 mt-6">
@@ -64,31 +70,28 @@
         </div>
     </div>
 
+    <!-- ==================== APP ==================== -->
     <div id="app-container" class="hidden flex min-h-screen">
         
         <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between hidden md:flex">
             <div class="p-6">
                 <div class="text-2xl font-extrabold text-purple-500 tracking-wide mb-8">NetGamer <span class="text-white">MX</span></div>
                 <nav class="space-y-2">
-                    <button onclick="switchTab('tab-inicio')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold transition text-left">
+                    <button onclick="switchTab('tab-inicio', event)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold transition text-left">
                         <i class="fa-solid fa-house"></i> <span>Inicio</span>
                     </button>
-                    <button onclick="switchTab('tab-ofertas')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white transition text-left">
+                    <button onclick="switchTab('tab-ofertas', event)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white transition text-left">
                         <i class="fa-solid fa-gamepad"></i> <span>Muros de Ofertas</span>
                     </button>
-                    <button onclick="switchTab('tab-canjear')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white transition text-left">
+                    <button onclick="switchTab('tab-referidos', event)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white transition text-left">
+                        <i class="fa-solid fa-user-plus"></i> <span>Referidos</span>
+                    </button>
+                    <button onclick="switchTab('tab-canjear', event)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white transition text-left">
                         <i class="fa-solid fa-gift"></i> <span>Canjear Premios</span>
                     </button>
                 </nav>
             </div>
             <div class="p-6 border-t border-slate-700">
-                
-                <!-- Adsterra: Banner vertical sidebar (300x250 o 160x600) -->
-                <div class="w-full flex justify-center mb-4 bg-slate-900/50 border border-slate-700 rounded-xl overflow-hidden min-h-[250px] items-center">
-                    <script src="https://pl29586207.effectivecpmnetwork.com/dc/55/f1/dc55f1198cbf0bd4731db92aadc6b54f.js"></script>
-                    <script src="https://pl29586208.effectivecpmnetwork.com/c9/7f/52/c97f52ee91d1bd3652fce5a2f49b61c5.js"></script>
-                </div>
-
                 <button onclick="cerrarSesion()" class="w-full bg-slate-900 hover:bg-rose-950 text-rose-400 font-semibold py-2 px-4 rounded-xl transition text-sm">
                     <i class="fa-solid fa-right-from-bracket mr-2"></i> Cerrar Sesión
                 </button>
@@ -110,15 +113,13 @@
 
             <main class="flex-1 p-6 overflow-y-auto">
 
-
-
-
+                <!-- TAB INICIO -->
                 <div id="tab-inicio" class="tab-content active space-y-6">
                     <div class="bg-gradient-to-r from-purple-800 to-indigo-900 rounded-3xl p-8 relative overflow-hidden shadow-xl">
                         <div class="relative z-10 max-w-lg">
                             <h2 class="text-3xl font-black mb-2">¡Consigue Dinero Real Jugando!</h2>
                             <p class="text-purple-200 text-sm mb-6">Completa tareas en nuestros múltiples muros de ofertas, acumula NetCoins al instante y canjéalos directamente por increíbles premios digitales o transferencias bancarias.</p>
-                            <button onclick="switchTab('tab-ofertas')" class="bg-white text-indigo-900 font-extrabold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition duration-200">Ir a los Muros de Ofertas</button>
+                            <button onclick="switchTab('tab-ofertas', event)" class="bg-white text-indigo-900 font-extrabold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition duration-200">Ir a los Muros de Ofertas</button>
                         </div>
                     </div>
 
@@ -139,22 +140,30 @@
                         </div>
                         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between">
                             <div>
-                                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Servidor Realtime</span>
-                                <h3 class="text-2xl font-black text-purple-400 mt-1">Activo</h3>
+                                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Mis Referidos</span>
+                                <h3 class="text-2xl font-black text-purple-400 mt-1"><span id="total-referidos-header">0</span> amigos</h3>
                             </div>
-                            <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl text-xl"><i class="fa-solid fa-bolt"></i></div>
+                            <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl text-xl"><i class="fa-solid fa-users"></i></div>
                         </div>
+                    </div>
+
+                    <!-- Banner referidos en inicio -->
+                    <div class="bg-gradient-to-r from-emerald-900/50 to-teal-900/50 border border-emerald-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-extrabold text-emerald-400 mb-1"><i class="fa-solid fa-user-plus mr-2"></i>¡Invita amigos y gana NetCoins!</h3>
+                            <p class="text-slate-300 text-sm">Por cada amigo que se registre con tu enlace, <strong class="text-white">tú ganas 500 NC</strong> y <strong class="text-white">tu amigo gana 500 NC</strong> de bienvenida.</p>
+                        </div>
+                        <button onclick="switchTab('tab-referidos', event)" class="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 py-3 rounded-xl text-sm whitespace-nowrap transition">Ver mi enlace</button>
                     </div>
                 </div>
 
+                <!-- TAB OFERTAS -->
                 <div id="tab-ofertas" class="tab-content">
-                    
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button onclick="cambiarMuro('adgem')" id="btn-adgem" class="muro-btn bg-purple-600 text-white font-bold py-2 px-5 rounded-lg text-sm transition">AdGem</button>
                         <button onclick="cambiarMuro('torox')" id="btn-torox" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-5 rounded-lg text-sm transition">Torox</button>
                         <button onclick="cambiarMuro('monlix')" id="btn-monlix" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-5 rounded-lg text-sm transition">Monlix</button>
                     </div>
-
                     <div class="bg-slate-800 rounded-2xl p-2 border border-slate-700 shadow-xl overflow-hidden">
                         <div id="iframe-wrapper" class="flex flex-col items-center justify-center p-12 text-center text-slate-400">
                             <i class="fa-solid fa-spinner animate-spin text-4xl text-purple-500 mb-4"></i>
@@ -163,6 +172,102 @@
                     </div>
                 </div>
 
+                <!-- TAB REFERIDOS -->
+                <div id="tab-referidos" class="tab-content space-y-6">
+                    <div class="border-b border-slate-700 pb-4">
+                        <h2 class="text-2xl font-extrabold">Programa de Referidos</h2>
+                        <p class="text-slate-400 text-sm">Invita amigos y ganen NetCoins juntos.</p>
+                    </div>
+
+                    <!-- Cómo funciona -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 text-center">
+                            <div class="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-link text-purple-400 text-xl"></i>
+                            </div>
+                            <h4 class="font-bold mb-1">1. Copia tu enlace</h4>
+                            <p class="text-slate-400 text-xs">Cada usuario tiene un enlace único de referido</p>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 text-center">
+                            <div class="w-12 h-12 bg-emerald-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-share-nodes text-emerald-400 text-xl"></i>
+                            </div>
+                            <h4 class="font-bold mb-1">2. Compártelo</h4>
+                            <p class="text-slate-400 text-xs">Envíalo por WhatsApp, TikTok, Instagram o donde quieras</p>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 text-center">
+                            <div class="w-12 h-12 bg-amber-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-coins text-amber-400 text-xl"></i>
+                            </div>
+                            <h4 class="font-bold mb-1">3. Ganen juntos</h4>
+                            <p class="text-slate-400 text-xs">Tú recibes 500 NC y tu amigo 500 NC de bienvenida</p>
+                        </div>
+                    </div>
+
+                    <!-- Enlace de referido -->
+                    <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 space-y-4">
+                        <h3 class="font-extrabold text-lg text-purple-400"><i class="fa-solid fa-link mr-2"></i>Tu Enlace de Referido</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="referral-link-input" readonly
+                                class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none cursor-pointer"
+                                placeholder="Cargando tu enlace...">
+                            <button onclick="copiarEnlace()" id="btn-copiar"
+                                class="bg-purple-600 hover:bg-purple-700 font-bold px-5 py-3 rounded-xl transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        <!-- Botones compartir -->
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <button onclick="compartirWhatsApp()" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            </button>
+                            <button onclick="compartirTelegram()" class="bg-sky-700 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-brands fa-telegram"></i> Telegram
+                            </button>
+                            <button onclick="compartirFacebook()" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-brands fa-facebook"></i> Facebook
+                            </button>
+                            <button onclick="compartirTwitter()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-brands fa-x-twitter"></i> X / Twitter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats referidos -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Total Referidos</span>
+                                <h3 class="text-2xl font-black text-white mt-1"><span id="stat-total-referidos">0</span></h3>
+                            </div>
+                            <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl text-xl"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">NC Ganadas por Referidos</span>
+                                <h3 class="text-2xl font-black text-amber-300 mt-1"><span id="stat-nc-referidos">0</span> NC</h3>
+                            </div>
+                            <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl"><i class="fa-solid fa-coins"></i></div>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Recompensa por Referido</span>
+                                <h3 class="text-2xl font-black text-emerald-400 mt-1">500 NC</h3>
+                            </div>
+                            <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xl"><i class="fa-solid fa-gift"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de referidos -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6">
+                        <h3 class="font-extrabold text-lg mb-4"><i class="fa-solid fa-list mr-2 text-purple-400"></i>Amigos que invitaste</h3>
+                        <div id="lista-referidos" class="space-y-2">
+                            <p class="text-slate-500 text-sm text-center py-6">Aún no has referido a nadie. ¡Comparte tu enlace!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CANJEAR -->
                 <div id="tab-canjear" class="tab-content space-y-6">
                     <div class="border-b border-slate-700 pb-4">
                         <h2 class="text-2xl font-extrabold">Módulo de Retiros y Canjes</h2>
@@ -181,7 +286,6 @@
                                 <button onclick="abrirFormularioRetiro('Roblox')" class="bg-purple-600 hover:bg-purple-700 text-xs font-bold px-4 py-2 rounded-xl transition">Canjear</button>
                             </div>
                         </div>
-
                         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between hover:border-purple-500 transition duration-300">
                             <div>
                                 <span class="bg-blue-600/20 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md inline-block mb-3">Saldo Electrónico</span>
@@ -193,7 +297,6 @@
                                 <button onclick="abrirFormularioRetiro('PayPal')" class="bg-purple-600 hover:bg-purple-700 text-xs font-bold px-4 py-2 rounded-xl transition">Canjear</button>
                             </div>
                         </div>
-
                         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between hover:border-purple-500 transition duration-300">
                             <div>
                                 <span class="bg-emerald-600/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-md inline-block mb-3">Transferencia Directa</span>
@@ -212,12 +315,10 @@
                             <h3 class="text-lg font-bold text-purple-400">Canjear Premio: <span id="tipo-recompensa-txt" class="text-white"></span></h3>
                             <button onclick="cerrarFormularioRetiro()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
                         </div>
-                        
                         <div class="bg-slate-900 border border-purple-500/30 p-3 rounded-xl text-xs text-purple-300 mb-4 flex items-center space-x-2">
                             <i class="fa-solid fa-shield-halved text-amber-400 text-sm"></i>
-                            <span><strong>Políticas de Auditoría Técnica:</strong> Retiro mínimo de <strong>100 MXN</strong> y máximo de <strong>3000 MXN</strong> por operación. Los nombres del banco y del beneficiario son obligatorios para la revisión manual administrativa.</span>
+                            <span><strong>Políticas de Auditoría Técnica:</strong> Retiro mínimo de <strong>100 MXN</strong> y máximo de <strong>3000 MXN</strong> por operación.</span>
                         </div>
-
                         <form id="form-solicitud-retiro" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Monto a Retirar (en Pesos MXN)</label>
@@ -241,27 +342,42 @@
                         </form>
                     </div>
                 </div>
+
             </main>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = "https://meiwuluwrdjszxeyoqtt.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4"; 
-        
-        const CONVERSION_RATE = 100; 
+        const SUPABASE_KEY = "PEGAR_AQUI_TU_CLAVE_ANON_DE_SUPABASE";
+        const CONVERSION_RATE = 100;
+        const NC_POR_REFERIDO = 500;
+        const BASE_URL = "https://daniel00998888.github.io/NetGamer-MX/";
 
         const adgemAppId = "32676";
-        const toroxAppId = "TU_APP_ID_TOROX"; 
+        const toroxAppId = "TU_APP_ID_TOROX";
         const toroxSecretKey = "TU_SECRET_KEY_TOROX";
         const monlixAppId = "TU_APP_ID_MONLIX";
 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentUser = null; 
+        let currentUser = null;
+
+        // ── Detectar referido en URL al cargar ──
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+            sessionStorage.setItem('ref_code', refCode);
+        }
 
         document.addEventListener("DOMContentLoaded", () => {
             configurarEventosAuth();
             verificarSesionActiva();
+
+            // Mostrar badge si viene con ref
+            if (sessionStorage.getItem('ref_code')) {
+                document.getElementById('referido-detectado').classList.remove('hidden');
+                toggleAuthViews(false); // Mostrar registro directamente
+            }
         });
 
         function toggleAuthViews(showLogin) {
@@ -284,21 +400,57 @@
                 const username = document.getElementById("register-username").value;
                 const email = document.getElementById("register-email").value;
                 const password = document.getElementById("register-password").value;
-                const { error } = await _supabase.auth.signUp({
+                const refCodeGuardado = sessionStorage.getItem('ref_code');
+
+                const { data, error } = await _supabase.auth.signUp({
                     email, password,
-                    options: { data: { username: username } }
+                    options: { data: { username: username, referred_by: refCodeGuardado || null } }
                 });
-                if (error) alert("Error al registrarse: " + error.message);
-                else {
-                    alert("¡Cuenta configurada! Ya puedes iniciar sesión con tus credenciales.");
-                    toggleAuthViews(true);
+
+                if (error) { alert("Error al registrarse: " + error.message); return; }
+
+                // Si vino referido, procesar bonos
+                if (refCodeGuardado && data.user) {
+                    await procesarBonoReferido(data.user.id, refCodeGuardado);
+                    sessionStorage.removeItem('ref_code');
                 }
+
+                alert("¡Cuenta configurada! Ya puedes iniciar sesión.");
+                toggleAuthViews(true);
             });
 
             document.getElementById("form-solicitud-retiro").addEventListener("submit", (e) => {
                 e.preventDefault();
                 procesarSolicitudRetiro();
             });
+        }
+
+        async function procesarBonoReferido(nuevoUserId, referidorId) {
+            try {
+                // Dar 500 NC al nuevo usuario
+                const { data: perfilNuevo } = await _supabase.from('perfiles').select('netcoins').eq('id', nuevoUserId).single();
+                if (perfilNuevo) {
+                    await _supabase.from('perfiles').update({ netcoins: (perfilNuevo.netcoins || 0) + NC_POR_REFERIDO }).eq('id', nuevoUserId);
+                }
+
+                // Dar 500 NC al referidor
+                const { data: perfilRef } = await _supabase.from('perfiles').select('netcoins, total_referidos').eq('id', referidorId).single();
+                if (perfilRef) {
+                    await _supabase.from('perfiles').update({
+                        netcoins: (perfilRef.netcoins || 0) + NC_POR_REFERIDO,
+                        total_referidos: (perfilRef.total_referidos || 0) + 1
+                    }).eq('id', referidorId);
+                }
+
+                // Registrar el referido en la tabla
+                await _supabase.from('referidos').insert([{
+                    referidor_id: referidorId,
+                    referido_id: nuevoUserId,
+                    nc_otorgados: NC_POR_REFERIDO
+                }]);
+            } catch(err) {
+                console.error("Error procesando bono referido:", err);
+            }
         }
 
         async function verificarSesionActiva() {
@@ -308,10 +460,11 @@
                 document.getElementById("auth-container").classList.add("hidden");
                 document.getElementById("app-container").classList.remove("hidden");
                 document.getElementById("user-display-name").innerText = currentUser.user_metadata.username || currentUser.email;
-                
                 cargarDatosPerfil(currentUser);
                 suscribirseCambiosEnVivo(currentUser);
-                cambiarMuro('adgem'); 
+                cargarDatosReferidos(currentUser);
+                generarEnlaceReferido(currentUser);
+                cambiarMuro('adgem');
             } else {
                 document.getElementById("auth-container").classList.remove("hidden");
                 document.getElementById("app-container").classList.add("hidden");
@@ -319,8 +472,84 @@
         }
 
         async function cargarDatosPerfil(user) {
-            const { data, error } = await _supabase.from('perfiles').select('netcoins').eq('id', user.id).single();
-            if (!error && data) actualizarTextosInterfaz(data.netcoins || 0);
+            const { data, error } = await _supabase.from('perfiles').select('netcoins, total_referidos').eq('id', user.id).single();
+            if (!error && data) {
+                actualizarTextosInterfaz(data.netcoins || 0);
+                const totalRef = data.total_referidos || 0;
+                document.getElementById("total-referidos-header").innerText = totalRef;
+                document.getElementById("stat-total-referidos").innerText = totalRef;
+                document.getElementById("stat-nc-referidos").innerText = totalRef * NC_POR_REFERIDO;
+            }
+        }
+
+        function generarEnlaceReferido(user) {
+            const enlace = `${BASE_URL}?ref=${user.id}`;
+            document.getElementById("referral-link-input").value = enlace;
+        }
+
+        async function cargarDatosReferidos(user) {
+            const { data, error } = await _supabase.from('referidos')
+                .select('referido_id, created_at')
+                .eq('referidor_id', user.id)
+                .order('created_at', { ascending: false });
+
+            const lista = document.getElementById("lista-referidos");
+            if (error || !data || data.length === 0) {
+                lista.innerHTML = '<p class="text-slate-500 text-sm text-center py-6">Aún no has referido a nadie. ¡Comparte tu enlace!</p>';
+                return;
+            }
+
+            lista.innerHTML = data.map((ref, i) => `
+                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-700/50 rounded-xl px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-purple-600/30 rounded-full flex items-center justify-center text-purple-400 font-bold text-sm">${i + 1}</div>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Amigo referido</p>
+                            <p class="text-xs text-slate-400">${new Date(ref.created_at).toLocaleDateString('es-MX')}</p>
+                        </div>
+                    </div>
+                    <span class="text-amber-400 font-bold text-sm">+${NC_POR_REFERIDO} NC</span>
+                </div>
+            `).join('');
+        }
+
+        function copiarEnlace() {
+            const input = document.getElementById("referral-link-input");
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = document.getElementById("btn-copiar");
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡Copiado!';
+                btn.classList.replace('bg-purple-600', 'bg-emerald-600');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar';
+                    btn.classList.replace('bg-emerald-600', 'bg-purple-600');
+                }, 2000);
+            });
+        }
+
+        function obtenerMensajeCompartir() {
+            const enlace = document.getElementById("referral-link-input").value;
+            return `¡Únete a NetGamer MX y gana dinero real completando tareas! Usa mi enlace y ambos recibimos 500 NetCoins de regalo 🎮💰 ${enlace}`;
+        }
+
+        function compartirWhatsApp() {
+            const msg = encodeURIComponent(obtenerMensajeCompartir());
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        }
+
+        function compartirTelegram() {
+            const enlace = encodeURIComponent(document.getElementById("referral-link-input").value);
+            const texto = encodeURIComponent("¡Únete a NetGamer MX y gana dinero real! Ambos recibimos 500 NetCoins 🎮💰");
+            window.open(`https://t.me/share/url?url=${enlace}&text=${texto}`, '_blank');
+        }
+
+        function compartirFacebook() {
+            const enlace = encodeURIComponent(document.getElementById("referral-link-input").value);
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${enlace}`, '_blank');
+        }
+
+        function compartirTwitter() {
+            const msg = encodeURIComponent(obtenerMensajeCompartir());
+            window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
         }
 
         function suscribirseCambiosEnVivo(user) {
@@ -343,7 +572,6 @@
 
         function cambiarMuro(proveedor) {
             if (!currentUser) return;
-            
             document.querySelectorAll('.muro-btn').forEach(btn => {
                 btn.classList.remove('bg-purple-600', 'text-white');
                 btn.classList.add('bg-slate-700', 'text-slate-300');
@@ -352,27 +580,25 @@
             document.getElementById(`btn-${proveedor}`).classList.add('bg-purple-600', 'text-white');
 
             let urlIframe = "";
-            if (proveedor === 'adgem') {
-                urlIframe = `https://api.adgem.com/v1/wall?appid=${adgemAppId}&playerid=${currentUser.id}`;
-            } else if (proveedor === 'torox') {
-                urlIframe = `https://www.offertoro.com/ifr/show/${toroxAppId}/${currentUser.id}/${toroxSecretKey}`;
-            } else if (proveedor === 'monlix') {
-                urlIframe = `https://wall.monlix.com/?appid=${monlixAppId}&userid=${currentUser.id}`;
-            }
+            if (proveedor === 'adgem') urlIframe = `https://api.adgem.com/v1/wall?appid=${adgemAppId}&playerid=${currentUser.id}`;
+            else if (proveedor === 'torox') urlIframe = `https://www.offertoro.com/ifr/show/${toroxAppId}/${currentUser.id}/${toroxSecretKey}`;
+            else if (proveedor === 'monlix') urlIframe = `https://wall.monlix.com/?appid=${monlixAppId}&userid=${currentUser.id}`;
 
-            const wrapper = document.getElementById('iframe-wrapper');
-            wrapper.innerHTML = `<iframe src="${urlIframe}" frameborder="0" class="w-full rounded-xl shadow-inner bg-white"></iframe>`;
+            document.getElementById('iframe-wrapper').innerHTML = `<iframe src="${urlIframe}" frameborder="0" class="w-full rounded-xl shadow-inner bg-white"></iframe>`;
         }
 
-        function switchTab(tabId) {
+        function switchTab(tabId, e) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-purple-600', 'text-white');
                 btn.classList.add('text-slate-400', 'hover:bg-slate-700');
             });
-            event.currentTarget.classList.add('bg-purple-600', 'text-white');
-            event.currentTarget.classList.remove('text-slate-400', 'hover:bg-slate-700');
+            const target = e ? e.currentTarget : document.querySelector(`[onclick="switchTab('${tabId}', event)"]`);
+            if (target) {
+                target.classList.add('bg-purple-600', 'text-white');
+                target.classList.remove('text-slate-400', 'hover:bg-slate-700');
+            }
         }
 
         function abrirFormularioRetiro(tipo) {
@@ -395,17 +621,11 @@
             const tipoPremio = document.getElementById("tipo-recompensa-txt").innerText;
             const costoNetCoins = montoMXN * CONVERSION_RATE;
 
-            if (montoMXN < 100 || montoMXN > 3000) {
-                alert("Error: Transacciones permitidas de 100 a 3000 MXN."); return;
-            }
-            if (!banco || !beneficiario || !destino) {
-                alert("Campos incompletos para revisión."); return;
-            }
+            if (montoMXN < 100 || montoMXN > 3000) { alert("Error: Transacciones permitidas de 100 a 3000 MXN."); return; }
+            if (!banco || !beneficiario || !destino) { alert("Campos incompletos para revisión."); return; }
 
             const { data: perfil } = await _supabase.from('perfiles').select('netcoins').eq('id', currentUser.id).single();
-            if (!perfil || perfil.netcoins < costoNetCoins) {
-                alert(`Fondos insuficientes. Requieres ${costoNetCoins} NetCoins.`); return;
-            }
+            if (!perfil || perfil.netcoins < costoNetCoins) { alert(`Fondos insuficientes. Requieres ${costoNetCoins} NetCoins.`); return; }
 
             const { error: errorInsert } = await _supabase.from('retiros_pendientes').insert([{
                 user_id: currentUser.id, monto_mxn: montoMXN, netcoins_deducidos: costoNetCoins,
@@ -413,9 +633,7 @@
                 tipo_premio: tipoPremio, estatus: 'Pendiente'
             }]);
 
-            if (errorInsert) {
-                alert("Error al registrar retiro: " + errorInsert.message); return;
-            }
+            if (errorInsert) { alert("Error al registrar retiro: " + errorInsert.message); return; }
 
             await _supabase.from('perfiles').update({ netcoins: perfil.netcoins - costoNetCoins }).eq('id', currentUser.id);
             alert("Solicitud enviada exitosamente para revisión administrativa.");
