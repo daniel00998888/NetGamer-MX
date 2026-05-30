@@ -388,7 +388,7 @@
 
     <script>
         const SUPABASE_URL = "https://meiwuluwrdjszxeyoqtt.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4";
+        const SUPABASE_KEY = "PEGAR_AQUI_TU_CLAVE_ANON_DE_SUPABASE";
         const CONVERSION_RATE = 100;
         const NC_POR_REFERIDO = 500;
         const BASE_URL = "https://daniel00998888.github.io/NetGamer-MX/";
@@ -566,32 +566,42 @@
 
         async function procesarBonoReferido(nuevoUserId, referidorId) {
             try {
-                // Evitar darse referido a sí mismo
-                if (nuevoUserId === referidorId) return;
+                if (nuevoUserId === referidorId) {
+                    sessionStorage.removeItem('ref_code');
+                    return;
+                }
 
-                // Verificar si este referido ya fue procesado antes
-                const { data: yaExiste } = await _supabase
-                    .from('referidos')
-                    .select('id')
-                    .eq('referidor_id', referidorId)
-                    .eq('referido_id', nuevoUserId)
+                // Verificar si ya fue procesado en la tabla perfiles
+                const { data: perfilNuevo } = await _supabase
+                    .from('perfiles')
+                    .select('netcoins, referido_procesado')
+                    .eq('id', nuevoUserId)
                     .single();
 
-                if (yaExiste) {
-                    // Ya se procesó, limpiar storage y salir
+                // Si ya se procesó, limpiar y salir
+                if (!perfilNuevo || perfilNuevo.referido_procesado === true) {
                     sessionStorage.removeItem('ref_code');
                     sessionStorage.removeItem('ref_pending_user');
                     return;
                 }
 
+                // Marcar como procesado PRIMERO para evitar race conditions
+                await _supabase.from('perfiles')
+                    .update({ referido_procesado: true })
+                    .eq('id', nuevoUserId);
+
                 // Dar 500 NC al nuevo usuario
-                const { data: perfilNuevo } = await _supabase.from('perfiles').select('netcoins').eq('id', nuevoUserId).single();
-                if (perfilNuevo) {
-                    await _supabase.from('perfiles').update({ netcoins: (perfilNuevo.netcoins || 0) + NC_POR_REFERIDO }).eq('id', nuevoUserId);
-                }
+                await _supabase.from('perfiles')
+                    .update({ netcoins: (perfilNuevo.netcoins || 0) + NC_POR_REFERIDO })
+                    .eq('id', nuevoUserId);
 
                 // Dar 500 NC al referidor
-                const { data: perfilRef } = await _supabase.from('perfiles').select('netcoins, total_referidos').eq('id', referidorId).single();
+                const { data: perfilRef } = await _supabase
+                    .from('perfiles')
+                    .select('netcoins, total_referidos')
+                    .eq('id', referidorId)
+                    .single();
+
                 if (perfilRef) {
                     await _supabase.from('perfiles').update({
                         netcoins: (perfilRef.netcoins || 0) + NC_POR_REFERIDO,
@@ -599,19 +609,21 @@
                     }).eq('id', referidorId);
                 }
 
-                // Registrar el referido en la tabla
+                // Registrar en tabla referidos
                 await _supabase.from('referidos').insert([{
                     referidor_id: referidorId,
                     referido_id: nuevoUserId,
                     nc_otorgados: NC_POR_REFERIDO
                 }]);
 
-                // Limpiar storage definitivamente
+                // Limpiar sessionStorage definitivamente
                 sessionStorage.removeItem('ref_code');
                 sessionStorage.removeItem('ref_pending_user');
 
             } catch(err) {
                 console.error("Error procesando bono referido:", err);
+                sessionStorage.removeItem('ref_code');
+                sessionStorage.removeItem('ref_pending_user');
             }
         }
 
