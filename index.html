@@ -177,7 +177,7 @@
         // ══════════════════════════════════════════
         async function verificarAdBlock() {
             return new Promise((resolve) => {
-                let votos = 0; // sistema de votación: necesita 2+ métodos para disparar
+                let votos = 0;
 
                 // MÉTODO 1: Elemento señuelo con clases EasyList
                 const cebo = document.createElement('div');
@@ -186,16 +186,7 @@
                 cebo.innerHTML = '&nbsp;';
                 document.body.appendChild(cebo);
 
-                // MÉTODO 2: Fetch a dominio de anuncios conocido
-                let fetchBloqueado = false;
-                fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
-                    method: 'HEAD',
-                    signal: AbortSignal.timeout(3000),
-                    mode: 'no-cors'
-                }).catch(() => { fetchBloqueado = true; });
-
                 setTimeout(() => {
-                    // Verificar cebo
                     const estilo = window.getComputedStyle(cebo);
                     const ceboBloqueado = (
                         cebo.offsetHeight === 0 ||
@@ -206,10 +197,9 @@
                     try { document.body.removeChild(cebo); } catch(e) {}
 
                     if (ceboBloqueado) votos++;
-                    if (fetchBloqueado) votos++;
                     if (typeof window.canRunAds === 'undefined') votos++;
 
-                    // Necesita al menos 2 votos para evitar falsos positivos
+                    // Necesita 2 votos para evitar falsos positivos
                     window._adBlockDetectado = votos >= 2;
                     resolve();
                 }, 500);
@@ -217,35 +207,34 @@
         }
 
         // ══════════════════════════════════════════
-        // DETECCIÓN VPN — APIs con fallback
+        // DETECCIÓN VPN — solo APIs con HTTPS y CORS
         // ══════════════════════════════════════════
         async function verificarVPN() {
             let vpnVotos = 0;
 
-            // API 1: ip-api.com (más confiable y sin CORS issues)
+            // API 1: ip-api.com HTTPS (pro endpoint con CORS)
             try {
-                const r = await fetch('http://ip-api.com/json/?fields=status,proxy,hosting', {
+                const r = await fetch('https://pro.ip-api.com/json/?fields=status,proxy,hosting&key=free', {
                     signal: AbortSignal.timeout(5000)
                 });
                 const d = await r.json();
-                if (d.proxy === true) vpnVotos += 2; // proxy es muy seguro
+                if (d.proxy   === true) vpnVotos += 2;
                 if (d.hosting === true) vpnVotos++;
             } catch(e) {}
 
-            // API 2: vpnapi.io
+            // API 2: ipapi.is — tiene CORS abierto
             try {
-                const r = await fetch('https://vpnapi.io/api/', {
+                const r = await fetch('https://api.ipapi.is/', {
                     signal: AbortSignal.timeout(5000)
                 });
                 const d = await r.json();
-                if (d.security) {
-                    if (d.security.vpn   === true) vpnVotos += 2;
-                    if (d.security.proxy === true) vpnVotos += 2;
-                    if (d.security.tor   === true) vpnVotos += 3;
-                }
+                if (d.is_proxy === true) vpnVotos += 2;
+                if (d.is_vpn   === true) vpnVotos += 2;
+                if (d.is_tor   === true) vpnVotos += 3;
+                if (d.is_datacenter === true) vpnVotos++;
             } catch(e) {}
 
-            // WebRTC leak detection
+            // API 3: WebRTC leak detection
             try {
                 await new Promise((res) => {
                     const ips = new Set();
