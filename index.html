@@ -70,7 +70,6 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
 
-    <!-- ==================== SPLASH ==================== -->
     <div id="splash-screen" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-[999]">
         <h1 class="text-3xl font-extrabold text-purple-500 tracking-wide mb-3">NetGamer <span class="text-white">MX</span></h1>
         <div class="flex gap-1.5 mt-4">
@@ -80,7 +79,6 @@
         </div>
     </div>
 
-    <!-- ==================== AUTH ==================== -->
     <div id="auth-container" class="hidden flex items-center justify-center min-h-screen px-4 py-8">
         <div class="bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700">
             <div class="text-center mb-6 sm:mb-8">
@@ -88,7 +86,6 @@
                 <p class="text-slate-400 text-xs sm:text-sm mt-2">Gana recompensas completando ofertas y tareas</p>
             </div>
 
-            <!-- Login -->
             <div id="login-view">
                 <h2 class="text-lg sm:text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
                 <form id="login-form" class="space-y-4">
@@ -111,7 +108,6 @@
                 </p>
             </div>
 
-            <!-- Registro -->
             <div id="register-view" class="hidden">
                 <h2 class="text-lg sm:text-xl font-bold mb-4 text-center">Crear Cuenta</h2>
                 <form id="register-form" class="space-y-4">
@@ -144,7 +140,6 @@
                 </p>
             </div>
 
-            <!-- OTP -->
             <div id="verify-email-view" class="hidden text-center space-y-5">
                 <div class="w-14 h-14 sm:w-16 sm:h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto">
                     <i class="fa-solid fa-shield-halved text-purple-400 text-2xl sm:text-3xl"></i>
@@ -174,13 +169,17 @@
                 </p>
                 <button onclick="toggleAuthViews(false)" class="text-xs text-slate-500 hover:text-slate-300 transition">← Volver al registro</button>
             </div>
+
+            <div class="mt-8 pt-5 border-t border-slate-700/50 flex justify-center gap-4 text-xs text-slate-500">
+                <button type="button" onclick="abrirPrivacidad()" class="hover:text-purple-400 transition">Política de Privacidad</button>
+                <span>&bull;</span>
+                <button type="button" onclick="abrirTerminos()" class="hover:text-purple-400 transition">Términos de Uso</button>
+            </div>
         </div>
     </div>
 
-    <!-- ==================== APP ==================== -->
     <div id="app-container" class="hidden flex min-h-screen">
 
-        <!-- Sidebar Desktop/Tablet -->
         <aside id="sidebar" class="bg-slate-800 border-r border-slate-700 flex flex-col justify-between flex-shrink-0">
             <div class="p-4 sm:p-6">
                 <div class="sidebar-logo text-xl sm:text-2xl font-extrabold text-purple-500 tracking-wide mb-6 sm:mb-8 truncate">
@@ -201,17 +200,20 @@
                     </button>
                 </nav>
             </div>
-            <div class="p-4 sm:p-6 border-t border-slate-700">
+            <div class="p-4 sm:p-6 border-t border-slate-700 space-y-3">
+                <div class="flex justify-center gap-3 text-[11px] text-slate-400 sidebar-label">
+                    <button onclick="abrirPrivacidad()" class="hover:text-purple-400 transition">Privacidad</button>
+                    <span>&bull;</span>
+                    <button onclick="abrirTerminos()" class="hover:text-purple-400 transition">Términos</button>
+                </div>
                 <button onclick="cerrarSesion()" class="w-full bg-slate-900 hover:bg-rose-950 active:bg-rose-900 text-rose-400 font-semibold py-2 px-3 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-from-bracket shrink-0"></i> <span class="sidebar-label">Cerrar Sesión</span>
                 </button>
             </div>
         </aside>
 
-        <!-- Main -->
         <div class="flex-1 flex flex-col overflow-x-hidden min-w-0">
 
-            <!-- Header -->
             <header class="h-14 sm:h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-3 sm:px-6 z-10 gap-2">
                 <span class="text-xs sm:text-sm text-slate-400 truncate">Bienvenido, <strong id="user-display-name" class="text-white">...</strong></span>
                 <div class="bg-slate-950 px-3 sm:px-4 py-1.5 rounded-full border border-purple-500/50 flex items-center gap-1.5 sm:gap-2 shadow-inner shrink-0">
@@ -222,10 +224,8 @@
                 </div>
             </header>
 
-            <!-- Content -->
             <main id="main-content" class="flex-1 p-3 sm:p-6 overflow-y-auto">
 
-                <!-- TAB INICIO -->
                 <div id="tab-inicio" class="tab-content active space-y-4 sm:space-y-6">
                     <div class="bg-gradient-to-r from-purple-800 to-indigo-900 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl">
                         <h2 class="text-xl sm:text-3xl font-black mb-2">¡Consigue Dinero Real Jugando!</h2>
@@ -272,7 +272,6 @@
                     </div>
                 </div>
 
-                <!-- TAB OFERTAS -->
                 <div id="tab-ofertas" class="tab-content">
                     <div class="flex flex-wrap gap-2 mb-3 sm:mb-4">
                         <button onclick="cambiarMuro('adgem')" id="btn-adgem" class="muro-btn bg-purple-600 text-white font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">AdGem</button>
@@ -287,7 +286,6 @@
                     </div>
                 </div>
 
-                <!-- TAB REFERIDOS -->
                 <div id="tab-referidos" class="tab-content space-y-4 sm:space-y-6">
                     <div class="border-b border-slate-700 pb-3 sm:pb-4">
                         <h2 class="text-xl sm:text-2xl font-extrabold">Programa de Referidos</h2>
@@ -377,7 +375,6 @@
                     </div>
                 </div>
 
-                <!-- TAB CANJEAR -->
                 <div id="tab-canjear" class="tab-content space-y-4 sm:space-y-6">
                     <div class="border-b border-slate-700 pb-3 sm:pb-4">
                         <h2 class="text-xl sm:text-2xl font-extrabold">Módulo de Retiros y Canjes</h2>
@@ -462,7 +459,6 @@
             </main>
         </div>
 
-        <!-- Bottom Nav Mobile -->
         <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 justify-around items-center px-2 py-2">
             <button onclick="switchTab('tab-inicio', event)" class="tab-btn-mobile flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-purple-400 transition min-w-0">
                 <i class="fa-solid fa-house text-lg"></i>
@@ -485,6 +481,20 @@
                 <span class="text-xs font-semibold">Salir</span>
             </button>
         </nav>
+    </div>
+
+    <div id="modal-legal" class="hidden fixed inset-0 bg-slate-900/90 flex items-center justify-center z-[1000] p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-legal-title" class="text-xl sm:text-2xl font-extrabold text-purple-400">Título</h2>
+                <button onclick="cerrarModalLegal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="modal-legal-content" class="flex-1 overflow-y-auto text-sm text-slate-300 space-y-4 pr-2">
+                </div>
+            <div class="mt-6 pt-4 border-t border-slate-700 text-right">
+                <button onclick="cerrarModalLegal()" class="bg-purple-600 hover:bg-purple-700 active:bg-purple-800 font-bold py-2 px-6 rounded-xl transition text-white">Entendido</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -765,9 +775,12 @@
             document.getElementById(`btn-${proveedor}`).classList.remove('bg-slate-700', 'text-slate-300');
             document.getElementById(`btn-${proveedor}`).classList.add('bg-purple-600', 'text-white');
             let url = "";
-            if (proveedor === 'adgem') url = `https://api.adgem.com/v1/wall?appid=${adgemAppId}&playerid=${currentUser.id}`;
+            
+            // CORRECCIÓN AQUÍ: Se añade .toLowerCase() al ID de usuario para AdGem
+            if (proveedor === 'adgem') url = `https://api.adgem.com/v1/wall?appid=${adgemAppId}&playerid=${currentUser.id.toLowerCase()}`;
             else if (proveedor === 'torox') url = `https://www.offertoro.com/ifr/show/${toroxAppId}/${currentUser.id}/${toroxSecretKey}`;
             else if (proveedor === 'monlix') url = `https://wall.monlix.com/?appid=${monlixAppId}&userid=${currentUser.id}`;
+            
             document.getElementById('iframe-wrapper').innerHTML = `<iframe src="${url}" frameborder="0" class="w-full rounded-xl shadow-inner bg-white"></iframe>`;
         }
 
@@ -828,6 +841,41 @@
         async function cerrarSesion() {
             await _supabase.auth.signOut();
             verificarSesionActiva();
+        }
+
+        /* ==================== LÓGICA MODAL LEGAL ==================== */
+        const textoPrivacidad = `
+            <h3 class="font-bold text-white mb-2">1. Información que recopilamos</h3>
+            <p>Recopilamos de forma segura tu dirección de correo electrónico, nombre de usuario y datos analíticos de interacción dentro de la plataforma (como tareas iniciadas o completadas en nuestros muros asociados).</p>
+            <h3 class="font-bold text-white mb-2 mt-4">2. Uso de la información</h3>
+            <p>Usamos tu información exclusivamente para gestionar tu cuenta, procesar la entrega de tus recompensas y otorgar soporte técnico. Además, compartimos identificadores anónimos de usuario (UUID) con nuestros proveedores de ofertas (ej. AdGem) estrictamente para verificar y otorgar créditos de manera automática.</p>
+            <h3 class="font-bold text-white mb-2 mt-4">3. Retención y Seguridad de Datos</h3>
+            <p>Empleamos estándares de seguridad de la industria a través de nuestra arquitectura en la nube (Supabase) para encriptar contraseñas y proteger el acceso a tus datos personales. Puedes solicitar la eliminación completa de tu cuenta en cualquier momento contactando a nuestro soporte.</p>
+        `;
+
+        const textoTerminos = `
+            <h3 class="font-bold text-white mb-2">1. Aceptación de los Términos</h3>
+            <p>Al acceder y utilizar NetGamer MX, aceptas cumplir en su totalidad con estos términos y condiciones. Esta plataforma está destinada a un público de 13 años o mayor.</p>
+            <h3 class="font-bold text-white mb-2 mt-4">2. Políticas Antifraude</h3>
+            <p>Queda <strong>estrictamente prohibido</strong> el uso de Redes Privadas Virtuales (VPNs), servidores Proxy, emuladores, la creación de múltiples cuentas por un mismo usuario, y el uso de software de automatización (bots). Cualquier infracción detectada resultará en el baneo permanente de la cuenta y el decomiso de los fondos ("NetCoins") almacenados.</p>
+            <h3 class="font-bold text-white mb-2 mt-4">3. Proceso de Retiro de Fondos</h3>
+            <p>NetGamer MX y sus administradores se reservan el derecho de realizar auditorías manuales o automáticas a las ofertas completadas antes de liberar fondos mediante transferencias bancarias (SPEI) u otros métodos. Las equivalencias de NetCoins a moneda real pueden estar sujetas a cambios anunciados previamente.</p>
+        `;
+
+        function abrirPrivacidad() {
+            document.getElementById('modal-legal-title').innerText = 'Política de Privacidad';
+            document.getElementById('modal-legal-content').innerHTML = textoPrivacidad;
+            document.getElementById('modal-legal').classList.remove('hidden');
+        }
+
+        function abrirTerminos() {
+            document.getElementById('modal-legal-title').innerText = 'Términos y Condiciones';
+            document.getElementById('modal-legal-content').innerHTML = textoTerminos;
+            document.getElementById('modal-legal').classList.remove('hidden');
+        }
+
+        function cerrarModalLegal() {
+            document.getElementById('modal-legal').classList.add('hidden');
         }
     </script>
 </body>
