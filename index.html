@@ -357,6 +357,9 @@
                         <button onclick="cambiarMuro('adgem')" id="btn-adgem" class="muro-btn bg-purple-600 text-white font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">AdGem</button>
                         <button onclick="cambiarMuro('torox')" id="btn-torox" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">Torox</button>
                         <button onclick="cambiarMuro('monlix')" id="btn-monlix" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">Monlix</button>
+                        <button onclick="cambiarMuro('bitlabs')" id="btn-bitlabs" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clipboard-list text-sky-400"></i> Encuestas
+                        </button>
                     </div>
                     <div class="bg-slate-800 rounded-2xl p-1.5 sm:p-2 border border-slate-700 shadow-xl overflow-hidden">
                         <div id="iframe-wrapper" class="flex flex-col items-center justify-center p-8 sm:p-12 text-center text-slate-400">
@@ -589,6 +592,7 @@
         const toroxAppId = "TU_APP_ID_TOROX";
         const toroxSecretKey = "TU_SECRET_KEY_TOROX";
         const monlixAppId = "TU_APP_ID_MONLIX";
+        const bitlabsAppToken = "8b10d67e-42fe-448a-809f-2bdb45d7b79a";
 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
@@ -913,6 +917,7 @@
             if (proveedor === 'adgem') url = `https://api.adgem.com/v1/wall?appid=${adgemAppId}&playerid=${currentUser.id.toLowerCase()}`;
             else if (proveedor === 'torox') url = `https://www.offertoro.com/ifr/show/${toroxAppId}/${currentUser.id}/${toroxSecretKey}`;
             else if (proveedor === 'monlix') url = `https://wall.monlix.com/?appid=${monlixAppId}&userid=${currentUser.id}`;
+            else if (proveedor === 'bitlabs') url = `https://web.bitlabs.ai?token=${bitlabsAppToken}&uid=${currentUser.id.toLowerCase()}`;
             
             document.getElementById('iframe-wrapper').innerHTML = `<iframe src="${url}" frameborder="0" class="w-full rounded-xl shadow-inner bg-white"></iframe>`;
         }
