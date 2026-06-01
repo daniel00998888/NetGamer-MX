@@ -352,19 +352,56 @@
                     </div>
                 </div>
 
-                <div id="tab-ofertas" class="tab-content">
-                    <div class="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                        <button onclick="cambiarMuro('adgem')" id="btn-adgem" class="muro-btn bg-purple-600 text-white font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">AdGem</button>
-                        <button onclick="cambiarMuro('torox')" id="btn-torox" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">Torox</button>
-                        <button onclick="cambiarMuro('monlix')" id="btn-monlix" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition">Monlix</button>
-                        <button onclick="cambiarMuro('bitlabs')" id="btn-bitlabs" class="muro-btn bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 sm:px-5 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-clipboard-list text-sky-400"></i> Encuestas
-                        </button>
+                <div id="tab-ofertas" class="tab-content space-y-4 sm:space-y-6">
+
+                    <!-- Próximamente banner -->
+                    <div class="bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border border-purple-500/30 rounded-2xl p-5 sm:p-6 text-center">
+                        <div class="text-4xl mb-3">🚀</div>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-white mb-2">¡Muros de Ofertas Próximamente!</h2>
+                        <p class="text-slate-400 text-xs sm:text-sm">Estamos integrando las mejores redes de ofertas para que puedas ganar NetCoins. Mientras tanto, usa la <strong class="text-amber-400">Ruleta Diaria</strong> para ganar gratis cada día.</p>
+                        <div class="flex flex-wrap justify-center gap-2 mt-4">
+                            <span class="bg-purple-600/20 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">⏳ AdGem — En revisión</span>
+                            <span class="bg-purple-600/20 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">⏳ Torox — En revisión</span>
+                            <span class="bg-purple-600/20 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">⏳ Monlix — En revisión</span>
+                            <span class="bg-sky-600/20 text-sky-300 text-xs font-bold px-3 py-1 rounded-full border border-sky-500/30">⏳ BitLabs — En revisión</span>
+                        </div>
                     </div>
-                    <div class="bg-slate-800 rounded-2xl p-1.5 sm:p-2 border border-slate-700 shadow-xl overflow-hidden">
-                        <div id="iframe-wrapper" class="flex flex-col items-center justify-center p-8 sm:p-12 text-center text-slate-400">
-                            <i class="fa-solid fa-spinner animate-spin text-3xl sm:text-4xl text-purple-500 mb-4"></i>
-                            <p class="text-sm">Cargando muro de ofertas...</p>
+
+                    <!-- Ruleta Diaria -->
+                    <div class="bg-slate-800 border border-amber-500/30 rounded-2xl p-5 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-extrabold text-amber-400"><i class="fa-solid fa-rotate mr-2"></i>Ruleta Diaria</h3>
+                                <p class="text-slate-400 text-xs mt-0.5">Gira gratis una vez al día y gana NetCoins</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-400">Próximo giro en:</p>
+                                <p id="ruleta-countdown" class="text-amber-400 font-extrabold text-sm">--:--:--</p>
+                            </div>
+                        </div>
+
+                        <!-- Ruleta SVG -->
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="relative" style="width:220px;height:220px;">
+                                <!-- Indicador -->
+                                <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10 text-2xl">▼</div>
+                                <canvas id="ruleta-canvas" width="220" height="220" class="rounded-full shadow-xl shadow-purple-900/50 cursor-pointer"></canvas>
+                            </div>
+
+                            <button id="btn-girar" onclick="girarRuleta()"
+                                class="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900 font-extrabold px-8 py-3 rounded-2xl shadow-lg shadow-amber-500/30 transition active:scale-95 text-sm sm:text-base">
+                                🎰 ¡Girar Gratis!
+                            </button>
+
+                            <p id="ruleta-resultado" class="text-sm font-bold text-center min-h-[20px]"></p>
+                        </div>
+
+                        <!-- Premios posibles -->
+                        <div class="grid grid-cols-4 gap-2 mt-5">
+                            <div class="bg-slate-900/60 rounded-xl p-2 text-center"><p class="text-amber-400 font-black text-sm">50</p><p class="text-slate-500 text-xs">NC</p></div>
+                            <div class="bg-slate-900/60 rounded-xl p-2 text-center"><p class="text-amber-400 font-black text-sm">100</p><p class="text-slate-500 text-xs">NC</p></div>
+                            <div class="bg-slate-900/60 rounded-xl p-2 text-center"><p class="text-amber-400 font-black text-sm">250</p><p class="text-slate-500 text-xs">NC</p></div>
+                            <div class="bg-slate-900/60 rounded-xl p-2 text-center"><p class="text-emerald-400 font-black text-sm">500</p><p class="text-slate-500 text-xs">NC</p></div>
                         </div>
                     </div>
                 </div>
@@ -764,6 +801,7 @@
                 suscribirseCambiosEnVivo(currentUser);
                 cargarDatosReferidos(currentUser);
                 generarEnlaceReferido(currentUser);
+                setTimeout(() => inicializarRuleta(), 500);
                 cambiarMuro('adgem');
             } else {
                 document.getElementById("auth-container").classList.remove("hidden");
@@ -974,6 +1012,175 @@
             await _supabase.from('perfiles').update({ netcoins: perfil.netcoins - costoNetCoins }).eq('id', currentUser.id);
             alert("¡Solicitud enviada para revisión!");
             cerrarFormularioRetiro();
+        }
+
+        // ══════════════════════════════════════════
+        // RULETA DIARIA
+        // ══════════════════════════════════════════
+        const RULETA_PREMIOS = [
+            { label: '50 NC',  nc: 50,  color: '#7c3aed' },
+            { label: '100 NC', nc: 100, color: '#2563eb' },
+            { label: '50 NC',  nc: 50,  color: '#0891b2' },
+            { label: '250 NC', nc: 250, color: '#059669' },
+            { label: '50 NC',  nc: 50,  color: '#7c3aed' },
+            { label: '100 NC', nc: 100, color: '#d97706' },
+            { label: '500 NC', nc: 500, color: '#dc2626' },
+            { label: '50 NC',  nc: 50,  color: '#7c3aed' },
+        ];
+        let ruletaGirando = false;
+        let ruletaAngulo = 0;
+
+        function dibujarRuleta(angulo) {
+            const canvas = document.getElementById('ruleta-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4;
+            const slice = (2 * Math.PI) / RULETA_PREMIOS.length;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            RULETA_PREMIOS.forEach((p, i) => {
+                const start = angulo + i * slice;
+                const end   = start + slice;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, start, end);
+                ctx.closePath();
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Texto
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(start + slice / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.fillText(p.label, r - 10, 5);
+                ctx.restore();
+            });
+
+            // Centro
+            ctx.beginPath();
+            ctx.arc(cx, cy, 18, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.strokeStyle = '#7c3aed';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function inicializarRuleta() {
+            dibujarRuleta(0);
+            verificarEstadoRuleta();
+        }
+
+        async function verificarEstadoRuleta() {
+            if (!currentUser) return;
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data } = await _supabase.from('perfiles')
+                .select('ultimo_giro_ruleta')
+                .eq('id', currentUser.id)
+                .single();
+
+            const btn = document.getElementById('btn-girar');
+            if (!btn) return;
+
+            if (data?.ultimo_giro_ruleta === hoy) {
+                btn.disabled = true;
+                btn.innerText = '✅ Ya giraste hoy';
+                btn.className = btn.className.replace('from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900', 'from-slate-700 to-slate-600 text-slate-400 cursor-not-allowed');
+                iniciarCuentaRegresiva();
+            }
+        }
+
+        function iniciarCuentaRegresiva() {
+            const el = document.getElementById('ruleta-countdown');
+            if (!el) return;
+            function actualizar() {
+                const ahora = new Date();
+                const manana = new Date();
+                manana.setHours(24, 0, 0, 0);
+                const diff = manana - ahora;
+                const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+                const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                el.innerText = `${h}:${m}:${s}`;
+            }
+            actualizar();
+            setInterval(actualizar, 1000);
+        }
+
+        async function girarRuleta() {
+            if (ruletaGirando || !currentUser) return;
+            const hoy = new Date().toISOString().split('T')[0];
+
+            // Verificar si ya giró hoy
+            const { data: perfil } = await _supabase.from('perfiles')
+                .select('netcoins, ultimo_giro_ruleta')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (perfil?.ultimo_giro_ruleta === hoy) {
+                document.getElementById('ruleta-resultado').innerText = '⚠️ Ya usaste tu giro de hoy.';
+                return;
+            }
+
+            ruletaGirando = true;
+            const btn = document.getElementById('btn-girar');
+            btn.disabled = true;
+            btn.innerText = '🎰 Girando...';
+            document.getElementById('ruleta-resultado').innerText = '';
+
+            // Premio aleatorio con pesos
+            const pesos = [30, 25, 30, 10, 30, 25, 5, 30]; // % probabilidad por segmento
+            const total = pesos.reduce((a, b) => a + b, 0);
+            let rand = Math.random() * total, idx = 0;
+            for (let i = 0; i < pesos.length; i++) {
+                rand -= pesos[i];
+                if (rand <= 0) { idx = i; break; }
+            }
+
+            const slice = (2 * Math.PI) / RULETA_PREMIOS.length;
+            // Ángulo final: apuntar el segmento ganador al indicador (arriba = -π/2)
+            const anguloDestino = (Math.PI * 2 * 5) - (idx * slice) - (slice / 2) + (Math.PI * 1.5);
+            const inicio = ruletaAngulo;
+            const duracion = 4000;
+            const startTime = performance.now();
+
+            function animar(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duracion, 1);
+                const ease = 1 - Math.pow(1 - progress, 4);
+                ruletaAngulo = inicio + (anguloDestino - inicio) * ease;
+                dibujarRuleta(ruletaAngulo);
+                if (progress < 1) { requestAnimationFrame(animar); }
+                else { finalizarGiro(idx, perfil); }
+            }
+            requestAnimationFrame(animar);
+        }
+
+        async function finalizarGiro(idx, perfil) {
+            ruletaGirando = false;
+            const premio = RULETA_PREMIOS[idx];
+            const hoy = new Date().toISOString().split('T')[0];
+
+            // Acreditar NC y guardar fecha
+            await _supabase.from('perfiles').update({
+                netcoins: (perfil.netcoins || 0) + premio.nc,
+                ultimo_giro_ruleta: hoy
+            }).eq('id', currentUser.id);
+
+            document.getElementById('ruleta-resultado').innerHTML =
+                `🎉 <span class="text-amber-400 font-extrabold">+${premio.nc} NetCoins</span> acreditados`;
+
+            const btn = document.getElementById('btn-girar');
+            btn.innerText = '✅ Ya giraste hoy';
+            btn.disabled = true;
+            btn.className = btn.className.replace('from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900', 'from-slate-700 to-slate-600 text-slate-400 cursor-not-allowed');
+            iniciarCuentaRegresiva();
         }
 
         async function cerrarSesion() {
