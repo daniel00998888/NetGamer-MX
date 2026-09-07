@@ -6,7 +6,11 @@
     <title>Admin – Soporte NetGamer MX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
@@ -686,9 +690,22 @@
 </div>
 
 <script>
-const SUPABASE_URL = "https://meiwuluwrdjszxeyoqtt.supabase.co";
-const SUPABASE_KEY = "sb_publishable_gZgGIamNJqf8ir8vvt1OTw_bJ-rosi4";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyAKogSW_UR2UAf1EBN1AkSqa9coEK7NREk",
+    authDomain: "netgamermx.firebaseapp.com",
+    projectId: "netgamermx",
+    storageBucket: "netgamermx.firebasestorage.app",
+    messagingSenderId: "652746027584",
+    appId: "1:652746027584:web:423377b36ba66002efa5a5",
+    measurementId: "G-GZNN0LCE1Z"
+};
+
+// Inicializar Firebase
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(firebaseApp);
+const storage = firebase.storage(firebaseApp);
+const authApp = firebase.auth(firebaseApp);
 
 let adminUser = null;
 let todosLosTickets = [];
@@ -714,41 +731,41 @@ async function iniciarSesionAdmin() {
 
     const ADMIN_EMAIL = 'ed8108868@gmail.com';
 
-    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+    try {
+        const userCredential = await authApp.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
 
-    if (error || !data.user) {
+        if (user.email !== ADMIN_EMAIL) {
+            await authApp.signOut();
+            showLoginError('No tienes permiso para acceder a este panel.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
+            return;
+        }
+
+        adminUser = user;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        document.getElementById('admin-email-label').textContent = adminUser.email;
+
+        await cargarTickets();
+        suscribirTicketsRealtime();
+        suscribirAnunciosRealtime();
+        suscribirsePresenciaUsuarios();
+    } catch (error) {
         showLoginError('Credenciales incorrectas. Verifica tu email y contraseña.');
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
-        return;
     }
-
-    if (data.user.email !== ADMIN_EMAIL) {
-        await _supabase.auth.signOut();
-        showLoginError('No tienes permiso para acceder a este panel.');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
-        return;
-    }
-
-    adminUser = data.user;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'flex';
-    document.getElementById('admin-email-label').textContent = adminUser.email;
-
-    await cargarTickets();
-    suscribirTicketsRealtime();
-    suscribirAnunciosRealtime();
-    suscribirsePresenciaUsuarios();
 }
 
 function suscribirAnunciosRealtime() {
-    _supabase
-        .channel('admin-anuncios-stats')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_personalizados' }, async () => {
+    db.collection('anuncios_personalizados')
+        .onSnapshot(async () => {
             await cargarAnuncios();
-        })
-        .subscribe();
+        }, (error) => {
+            console.error('Error en suscripción de anuncios:', error);
+        });
 }
 
 function showLoginError(msg) {
@@ -758,27 +775,47 @@ function showLoginError(msg) {
 }
 
 async function cerrarSesionAdmin() {
-    await _supabase.auth.signOut();
+    await authApp.signOut();
     location.reload();
 }
 
 
 
 async function cargarTickets() {
-    const { data: tickets, error } = await _supabase
-        .from('support_tickets')
-        .select(`
-            id, status, created_at, updated_at, user_id, unread_admin,
-            perfiles ( email, is_premium, premium_hasta )
-        `)
-        .order('updated_at', { ascending: false });
+    try {
+        const snapshot = await db.collection('support_tickets')
+            .orderBy('updated_at', 'desc')
+            .get();
 
-    const loadingEl = document.getElementById('tickets-loading');
-    if (loadingEl) loadingEl.style.display = 'none';
+        const loadingEl = document.getElementById('tickets-loading');
+        if (loadingEl) loadingEl.style.display = 'none';
 
-    if (error || !tickets) return;
-    todosLosTickets = tickets;
-    renderTicketsList();
+        todosLosTickets = [];
+        for (const doc of snapshot.docs) {
+            const ticket = doc.data();
+            ticket.id = doc.id;
+            
+            // Obtener datos del usuario desde Firestore
+            if (ticket.user_id) {
+                try {
+                    const userDoc = await db.collection('usuarios').doc(ticket.user_id).get();
+                    if (userDoc.exists) {
+                        ticket.perfiles = userDoc.data();
+                    }
+                } catch (e) {
+                    console.log('Usuario no encontrado:', ticket.user_id);
+                }
+            }
+            
+            todosLosTickets.push(ticket);
+        }
+        
+        renderTicketsList();
+    } catch (error) {
+        console.error('Error al cargar tickets:', error);
+        const loadingEl = document.getElementById('tickets-loading');
+        if (loadingEl) loadingEl.style.display = 'none';
+    }
 }
 
 function renderTicketsList() {
@@ -853,22 +890,33 @@ function setFiltro(f) {
 function filtrarTickets() { renderTicketsList(); }
 
 function suscribirTicketsRealtime() {
-    ticketsRealtimeChannel = _supabase
-        .channel('admin-tickets-global')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, async () => {
+    // Suscribir a cambios en tickets
+    db.collection('support_tickets')
+        .onSnapshot(async () => {
             await cargarTickets();
-        })
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages' }, async (payload) => {
-            if (payload.new.sender === 'user') {
-                const ticket = todosLosTickets.find(t => t.id === payload.new.ticket_id);
-                if (ticket && payload.new.ticket_id !== ticketActivoId) {
-                    ticket.unread_admin = (ticket.unread_admin || 0) + 1;
-                    renderTicketsList();
-                    mostrarToast(`💬 Nuevo mensaje de usuario`, 'info');
+        }, (error) => {
+            console.error('Error en suscripción de tickets:', error);
+        });
+
+    // Suscribir a nuevos mensajes
+    db.collection('support_messages')
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const msg = change.doc.data();
+                    if (msg.sender === 'user') {
+                        const ticket = todosLosTickets.find(t => t.id === msg.ticket_id);
+                        if (ticket && msg.ticket_id !== ticketActivoId) {
+                            ticket.unread_admin = (ticket.unread_admin || 0) + 1;
+                            renderTicketsList();
+                            mostrarToast(`💬 Nuevo mensaje de usuario`, 'info');
+                        }
+                    }
                 }
-            }
-        })
-        .subscribe();
+            });
+        }, (error) => {
+            console.error('Error en mensajes:', error);
+        });
 }
 
 
@@ -890,33 +938,36 @@ async function abrirTicket(ticketId) {
         document.getElementById('chat-user-id').textContent = `ID: ${ticket.user_id}`;
         actualizarBadgeStatus(ticket.status);
 
-
         const esPremiumActivo = !!(ticket.perfiles?.is_premium && ticket.perfiles?.premium_hasta && new Date(ticket.perfiles.premium_hasta) >= new Date());
         document.getElementById('chat-user-premium-badge').classList.toggle('hidden', !esPremiumActivo);
 
         if (ticket.unread_admin > 0) {
             ticket.unread_admin = 0;
-            await _supabase.from('support_tickets').update({ unread_admin: 0 }).eq('id', ticketId);
+            await db.collection('support_tickets').doc(ticketId).update({ unread_admin: 0 });
             renderTicketsList();
         }
     }
 
     await cargarMensajesChat(ticketId);
 
-    if (chatRealtimeChannel) _supabase.removeChannel(chatRealtimeChannel);
-    chatRealtimeChannel = _supabase
-        .channel(`admin-chat-${ticketId}`)
-        .on('postgres_changes', {
-            event: 'INSERT', schema: 'public', table: 'support_messages',
-            filter: `ticket_id=eq.${ticketId}`
-        }, payload => {
-            const ya = document.querySelector(`[data-msg-id="${payload.new.id}"]`);
-            if (!ya) {
-                renderMensajeAdmin(payload.new);
-                scrollChatAbajo();
-            }
-        })
-        .subscribe();
+    // Suscribir a nuevos mensajes en este ticket
+    if (chatRealtimeChannel) chatRealtimeChannel(); // Desuscribir anterior
+    chatRealtimeChannel = db.collection('support_messages')
+        .where('ticket_id', '==', ticketId)
+        .orderBy('created_at', 'desc')
+        .limit(1)
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const msg = { ...change.doc.data(), id: change.doc.id };
+                    const ya = document.querySelector(`[data-msg-id="${msg.id}"]`);
+                    if (!ya) {
+                        renderMensajeAdmin(msg);
+                        scrollChatAbajo();
+                    }
+                }
+            });
+        });
 
     document.getElementById('admin-reply-input').focus();
 }
@@ -927,22 +978,29 @@ async function cargarMensajesChat(ticketId) {
         <div class="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
     </div>`;
 
-    const { data: msgs } = await _supabase
-        .from('support_messages')
-        .select('*')
-        .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
+    try {
+        const snapshot = await db.collection('support_messages')
+            .where('ticket_id', '==', ticketId)
+            .orderBy('created_at', 'asc')
+            .get();
 
-    container.innerHTML = '';
-    if (msgs && msgs.length > 0) {
-        msgs.forEach(m => renderMensajeAdmin(m));
-    } else {
-        container.innerHTML = `<div class="text-center py-8">
-            <i class="fa-solid fa-comment-slash text-slate-700 text-2xl mb-2"></i>
-            <p class="text-sm text-slate-500">Sin mensajes aún</p>
-        </div>`;
+        container.innerHTML = '';
+        if (snapshot.size > 0) {
+            snapshot.docs.forEach(doc => {
+                const msg = { ...doc.data(), id: doc.id };
+                renderMensajeAdmin(msg);
+            });
+        } else {
+            container.innerHTML = `<div class="text-center py-8">
+                <i class="fa-solid fa-comment-slash text-slate-700 text-2xl mb-2"></i>
+                <p class="text-sm text-slate-500">Sin mensajes aún</p>
+            </div>`;
+        }
+        scrollChatAbajo();
+    } catch (error) {
+        console.error('Error al cargar mensajes:', error);
+        container.innerHTML = `<div class="text-center py-8 text-red-400">Error al cargar mensajes</div>`;
     }
-    scrollChatAbajo();
 }
 
 function renderMensajeAdmin(msg) {
@@ -1002,36 +1060,49 @@ async function enviarRespuestaAdmin() {
     let imageUrls = [];
     if (adminFilesSelected.length > 0) {
         for (const file of adminFilesSelected) {
-            const ext = file.name.split('.').pop();
-            const path = `support/${ticketActivoId}/admin_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data: uploadData, error: uploadError } = await _supabase.storage
-                .from('support-images')
-                .upload(path, file, { cacheControl: '3600', upsert: false });
-            if (!uploadError && uploadData) {
-                const { data: { publicUrl } } = _supabase.storage.from('support-images').getPublicUrl(path);
-                imageUrls.push(publicUrl);
+            try {
+                const ext = file.name.split('.').pop();
+                const path = `support/${ticketActivoId}/admin_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+                const storageRef = storage.ref(path);
+                await storageRef.put(file);
+                const url = await storageRef.getDownloadURL();
+                imageUrls.push(url);
+            } catch (error) {
+                console.error('Error al subir imagen:', error);
             }
         }
     }
 
-    await _supabase.from('support_messages').insert({
-        ticket_id: ticketActivoId,
-        sender: 'admin',
-        user_id: adminUser.id,
-        message: texto || null,
-        images: imageUrls.length > 0 ? imageUrls : null
-    });
+    try {
+        await db.collection('support_messages').add({
+            ticket_id: ticketActivoId,
+            sender: 'admin',
+            user_id: adminUser.uid,
+            message: texto || null,
+            images: imageUrls.length > 0 ? imageUrls : null,
+            created_at: new Date()
+        });
 
-    await _supabase.from('support_tickets').update({ updated_at: new Date().toISOString() }).eq('id', ticketActivoId);
+        await db.collection('support_tickets').doc(ticketActivoId).update({
+            updated_at: new Date()
+        });
 
-    const { data: t } = await _supabase.from('support_tickets').select('unread_user').eq('id', ticketActivoId).single();
-    await _supabase.from('support_tickets').update({ unread_user: (t?.unread_user || 0) + 1 }).eq('id', ticketActivoId);
+        const ticketDoc = await db.collection('support_tickets').doc(ticketActivoId).get();
+        const unreadUser = (ticketDoc.data()?.unread_user || 0) + 1;
+        await db.collection('support_tickets').doc(ticketActivoId).update({
+            unread_user: unreadUser
+        });
 
-    input.value = '';
-    input.style.height = 'auto';
-    limpiarAdminFiles();
-    btn.disabled = false;
-    input.focus();
+        input.value = '';
+        input.style.height = 'auto';
+        limpiarAdminFiles();
+        btn.disabled = false;
+        input.focus();
+    } catch (error) {
+        console.error('Error al enviar mensaje:', error);
+        mostrarToast('Error al enviar mensaje', 'error');
+        btn.disabled = false;
+    }
 }
 
 async function toggleEstadoTicket() {
@@ -1039,57 +1110,79 @@ async function toggleEstadoTicket() {
     const ticket = todosLosTickets.find(t => t.id === ticketActivoId);
     if (!ticket) return;
 
-    if (ticket.status === 'resolved') {
-        await _supabase.from('support_tickets').update({ status: 'open' }).eq('id', ticketActivoId);
-        ticket.status = 'open';
-        actualizarBadgeStatus('open');
-        renderTicketsList();
-        return;
-    }
-
-    const confirmar = confirm('¿Marcar como resuelto? Esto eliminará todos los mensajes e imágenes de esta conversación permanentemente.');
-    if (!confirmar) return;
-
-    const btn = document.getElementById('toggle-status-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i>Eliminando...';
-
-    const { data: msgs } = await _supabase
-        .from('support_messages')
-        .select('id, images')
-        .eq('ticket_id', ticketActivoId);
-
-    if (msgs && msgs.length > 0) {
-        const paths = [];
-        msgs.forEach(m => {
-            if (m.images && m.images.length > 0) {
-                m.images.forEach(url => {
-                    const match = url.match(/\/object\/public\/support-images\/(.+)$/);
-                    if (match) paths.push(decodeURIComponent(match[1]));
-                });
-            }
-        });
-        if (paths.length > 0) {
-            await _supabase.storage.from('support-images').remove(paths);
+    try {
+        if (ticket.status === 'resolved') {
+            await db.collection('support_tickets').doc(ticketActivoId).update({ status: 'open' });
+            ticket.status = 'open';
+            actualizarBadgeStatus('open');
+            renderTicketsList();
+            mostrarToast('Ticket reabierto', 'success');
+            return;
         }
+
+        const confirmar = confirm('¿Marcar como resuelto? Esto eliminará todos los mensajes e imágenes de esta conversación permanentemente.');
+        if (!confirmar) return;
+
+        const btn = document.getElementById('toggle-status-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i>Eliminando...';
+
+        // Obtener todos los mensajes para eliminar imágenes
+        const msgsSnapshot = await db.collection('support_messages')
+            .where('ticket_id', '==', ticketActivoId)
+            .get();
+
+        // Eliminar imágenes del storage
+        if (msgsSnapshot.size > 0) {
+            for (const doc of msgsSnapshot.docs) {
+                const msg = doc.data();
+                if (msg.images && msg.images.length > 0) {
+                    for (const imageUrl of msg.images) {
+                        try {
+                            // Extraer path de la URL de descarga
+                            const urlObj = new URL(imageUrl);
+                            const pathMatch = urlObj.pathname.match(/\/o\/(.+)\?/);
+                            if (pathMatch) {
+                                const path = decodeURIComponent(pathMatch[1]);
+                                const ref = storage.ref(path);
+                                await ref.delete();
+                            }
+                        } catch (e) {
+                            console.log('No se pudo eliminar imagen:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Eliminar todos los mensajes
+        const batch = db.batch();
+        msgsSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // Eliminar el ticket
+        await db.collection('support_tickets').doc(ticketActivoId).delete();
+
+        todosLosTickets = todosLosTickets.filter(t => t.id !== ticketActivoId);
+        ticketActivoId = null;
+        if (chatRealtimeChannel) { chatRealtimeChannel = null; }
+        document.getElementById('chat-active').classList.add('hidden');
+        document.getElementById('chat-active').classList.remove('flex');
+        document.getElementById('chat-empty').classList.remove('hidden');
+        const btnReset = document.getElementById('toggle-status-btn');
+        btnReset.disabled = false;
+        btnReset.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Marcar resuelto';
+        renderTicketsList();
+        mostrarToast('Conversación eliminada correctamente.', 'success');
+    } catch (error) {
+        console.error('Error al resolver ticket:', error);
+        mostrarToast('Error al resolver ticket', 'error');
+        const btn = document.getElementById('toggle-status-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Marcar resuelto';
     }
-    await _supabase.storage.from('support-images').remove([`support/${ticketActivoId}/.emptyFolderPlaceholder`]);
-
-    await _supabase.from('support_messages').delete().eq('ticket_id', ticketActivoId);
-
-    await _supabase.from('support_tickets').delete().eq('id', ticketActivoId);
-
-    todosLosTickets = todosLosTickets.filter(t => t.id !== ticketActivoId);
-    ticketActivoId = null;
-    if (chatRealtimeChannel) { _supabase.removeChannel(chatRealtimeChannel); chatRealtimeChannel = null; }
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-active').classList.remove('flex');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    const btnReset = document.getElementById('toggle-status-btn');
-    btnReset.disabled = false;
-    btnReset.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Marcar resuelto';
-    renderTicketsList();
-    mostrarToast('Conversación eliminada correctamente.', 'success');
 }
 
 function actualizarBadgeStatus(status) {
@@ -1385,7 +1478,7 @@ async function obtenerTokenSesionValido() {
 }
 
 async function cargarEstadoSitio() {
-    const { data, error } = await _supabase.from('estado_sitio').select('suspendido, motivo').eq('id', 1).single();
+    const { data, error } = await db.collection('estado_sitio').select('suspendido, motivo').eq('id', 1).single();
     if (!error && data) actualizarTarjetaEstadoSitio(data.suspendido, data.motivo);
 }
 
@@ -1468,15 +1561,21 @@ async function reactivarSitio() {
 }
 
 async function cargarAnuncios() {
-    const { data, error } = await _supabase
-        .from('anuncios_personalizados')
-        .select('*')
-        .order('created_at', { ascending: false });
+    try {
+        const snapshot = await db.collection('anuncios_personalizados')
+            .orderBy('created_at', 'desc')
+            .get();
 
-    if (error || !data) return;
-    todosLosAnuncios = data;
-    renderListaAnuncios();
-    actualizarStatsAnuncios();
+        todosLosAnuncios = [];
+        snapshot.docs.forEach(doc => {
+            todosLosAnuncios.push({ ...doc.data(), id: doc.id });
+        });
+
+        renderListaAnuncios();
+        actualizarStatsAnuncios();
+    } catch (error) {
+        console.error('Error al cargar anuncios:', error);
+    }
 }
 
 function actualizarStatsAnuncios() {
@@ -1656,10 +1755,10 @@ async function guardarAnuncio() {
 
     let error;
     if (id) {
-        ({ error } = await _supabase.from('anuncios_personalizados').update(payload).eq('id', id));
+        ({ error } = await db.collection('anuncios_personalizados').doc( id));
     } else {
         payload.activo = true;
-        ({ error } = await _supabase.from('anuncios_personalizados').insert(payload));
+        ({ error } = await db.collection('anuncios_personalizados').add(payload));
     }
 
     btn.disabled = false;
@@ -1676,7 +1775,7 @@ async function guardarAnuncio() {
 }
 
 async function toggleActivoAnuncio(id, nuevoEstado) {
-    await _supabase.from('anuncios_personalizados').update({ activo: nuevoEstado }).eq('id', id);
+    await db.collection('anuncios_personalizados').doc( id);
     cargarAnuncios();
 }
 
@@ -1693,7 +1792,7 @@ async function eliminarAnuncio(id) {
         }
     }
 
-    await _supabase.from('anuncios_personalizados').delete().eq('id', id);
+    await db.collection('anuncios_personalizados').doc(id).delete();
     mostrarToast('Anuncio eliminado', 'success');
     cargarAnuncios();
 }
@@ -1704,15 +1803,21 @@ let peliculaVideoFile = null;
 let peliculaMiniaturaFile = null;
 
 async function cargarPeliculas() {
-    const { data, error } = await _supabase
-        .from('peliculas')
-        .select('*')
-        .order('orden', { ascending: true });
+    try {
+        const snapshot = await db.collection('peliculas')
+            .orderBy('orden', 'asc')
+            .get();
 
-    if (error || !data) return;
-    todasLasPeliculas = data;
-    renderListaPeliculas();
-    actualizarStatsPeliculas();
+        todasLasPeliculas = [];
+        snapshot.docs.forEach(doc => {
+            todasLasPeliculas.push({ ...doc.data(), id: doc.id });
+        });
+
+        renderListaPeliculas();
+        actualizarStatsPeliculas();
+    } catch (error) {
+        console.error('Error al cargar películas:', error);
+    }
 }
 
 function actualizarStatsPeliculas() {
@@ -1930,10 +2035,10 @@ async function guardarPelicula() {
 
     let error;
     if (id) {
-        ({ error } = await _supabase.from('peliculas').update(payload).eq('id', id));
+        ({ error } = await db.collection('peliculas').doc( id));
     } else {
         payload.activo = true;
-        ({ error } = await _supabase.from('peliculas').insert(payload));
+        ({ error } = await db.collection('peliculas').add(payload));
     }
 
     btn.disabled = false;
@@ -1950,7 +2055,7 @@ async function guardarPelicula() {
 }
 
 async function toggleActivoPelicula(id, nuevoEstado) {
-    await _supabase.from('peliculas').update({ activo: nuevoEstado }).eq('id', id);
+    await db.collection('peliculas').doc( id);
     cargarPeliculas();
 }
 
@@ -1973,7 +2078,7 @@ async function eliminarPelicula(id) {
         }
     }
 
-    await _supabase.from('peliculas').delete().eq('id', id);
+    await db.collection('peliculas').doc(id).delete();
     mostrarToast('Película eliminada', 'success');
     cargarPeliculas();
 }
@@ -1984,18 +2089,21 @@ let filtroCanjesActual = 'todos';
 
 async function cargarCanjes() {
     try {
-        const { data: canjes, error: errorCanjes } = await _supabase
-            .from('retiros_pendientes')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const canjsSnapshot = await db.collection('retiros_pendientes')
+            .orderBy('created_at', 'desc')
+            .get();
 
-        if (errorCanjes) throw errorCanjes;
+        const perfilesSnapshot = await db.collection('usuarios').get();
 
-        const { data: perfiles, error: errorPerfiles } = await _supabase
-            .from('perfiles')
-            .select('id, email');
+        const canjes = [];
+        canjsSnapshot.docs.forEach(doc => {
+            canjes.push({ ...doc.data(), id: doc.id });
+        });
 
-        if (errorPerfiles) throw errorPerfiles;
+        const perfiles = [];
+        perfilesSnapshot.docs.forEach(doc => {
+            perfiles.push({ ...doc.data(), id: doc.id });
+        });
 
         const data = canjes.map(canje => ({
             ...canje,
@@ -2008,6 +2116,7 @@ async function cargarCanjes() {
     } catch(err) {
         console.error('Error cargando canjes:', err);
         document.getElementById('lista-canjes').innerHTML = '<p class="text-center text-red-400 py-8">Error al cargar canjes</p>';
+    }
     }
 }
 
@@ -2336,7 +2445,7 @@ async function cargarGananciasUsuario(userId) {
             .from('historial_ganancias')
             .select('concepto, netcoins, created_at')  
             .eq('user_id', userId)
-            .order('created_at', { ascending: false })
+            .orderBy('created_at', 'false ')
             .limit(50);
 
         if (error) throw error;
@@ -2382,7 +2491,7 @@ async function cargarRetirosPendientes(userId) {
             .from('retiros_pendientes')
             .select('tipo_premio, monto_mxn, netcoins_deducidos, estatus, created_at')
             .eq('user_id', userId)
-            .order('created_at', { ascending: false })
+            .orderBy('created_at', 'false ')
             .limit(50);
 
         if (error) throw error;
@@ -2493,7 +2602,7 @@ async function cargarBanners() {
         const { data, error } = await _supabase
             .from('banners_pantalla_completa')
             .select('*')
-            .order('orden', { ascending: true });
+            .orderBy('orden', 'true ');
 
         if (error) throw error;
 
@@ -2637,7 +2746,7 @@ async function guardarBanner() {
             // CREAR NUEVO
             ({ error } = await _supabase
                 .from('banners_pantalla_completa')
-                .insert(payload));
+                .add(payload));
         }
 
         if (error) throw error;
