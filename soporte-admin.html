@@ -6,6 +6,9 @@
     <title>Admin – Soporte NetGamer MX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- bcryptjs para verificar contraseñas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+
     <!-- Firebase SDK (Compat - Versión global, NO módulos) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -726,24 +729,60 @@ async function iniciarSesionAdmin() {
     if (!email || !password) { showLoginError('Completa todos los campos.'); return; }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i>Entrando...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i>Verificando...';
     errorEl.classList.add('hidden');
 
     const ADMIN_EMAIL = 'ed8108868@gmail.com';
 
     try {
-        const userCredential = await authApp.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+        // Buscar usuario en Firestore por email
+        const usuarioDoc = await db.collection('usuarios').doc(email).get();
+        
+        if (!usuarioDoc.exists) {
+            showLoginError('Usuario no encontrado.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
+            return;
+        }
 
-        if (user.email !== ADMIN_EMAIL) {
-            await authApp.signOut();
+        const usuarioData = usuarioDoc.data();
+        
+        // Verificar si tiene password_hash (contraseña vieja bcrypt)
+        if (usuarioData.password_hash) {
+            // Verificar contraseña contra hash bcrypt
+            const passwordValido = await bcrypt.compare(password, usuarioData.password_hash);
+            
+            if (!passwordValido) {
+                showLoginError('Contraseña incorrecta.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
+                return;
+            }
+        } else {
+            showLoginError('Este usuario no tiene contraseña configurada.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
+            return;
+        }
+
+        // Verificar que sea admin
+        if (email !== ADMIN_EMAIL) {
             showLoginError('No tienes permiso para acceder a este panel.');
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
             return;
         }
 
-        adminUser = user;
+        // Autenticar en Firebase (usar signInAnonymously + guardar datos)
+        const userCredential = await firebase.auth().signInAnonymously();
+        const user = userCredential.user;
+
+        adminUser = {
+            uid: user.uid,
+            email: email,
+            displayName: usuarioData.username || email
+        };
+
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'flex';
         document.getElementById('admin-email-label').textContent = adminUser.email;
@@ -752,8 +791,12 @@ async function iniciarSesionAdmin() {
         suscribirTicketsRealtime();
         suscribirAnunciosRealtime();
         suscribirsePresenciaUsuarios();
+        
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
     } catch (error) {
-        showLoginError('Credenciales incorrectas. Verifica tu email y contraseña.');
+        console.error('Error en login:', error);
+        showLoginError('Error al procesar el login. Intenta de nuevo.');
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i>Entrar al panel';
     }
@@ -775,8 +818,14 @@ function showLoginError(msg) {
 }
 
 async function cerrarSesionAdmin() {
-    await authApp.signOut();
-    location.reload();
+    try {
+        await firebase.auth().signOut();
+        adminUser = null;
+        location.reload();
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        location.reload();
+    }
 }
 
 
@@ -1077,6 +1126,7 @@ async function enviarRespuestaAdmin() {
         await db.collection('support_messages').add({
             ticket_id: ticketActivoId,
             sender: 'admin',
+            admin_email: adminUser.email,
             user_id: adminUser.uid,
             message: texto || null,
             images: imageUrls.length > 0 ? imageUrls : null,
