@@ -6,11 +6,11 @@
     <title>Admin – Soporte NetGamer MX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js"></script>
+    <!-- Firebase SDK (Compat - Versión global, NO módulos) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
@@ -701,11 +701,11 @@ const firebaseConfig = {
     measurementId: "G-GZNN0LCE1Z"
 };
 
-// Inicializar Firebase
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(firebaseApp);
-const storage = firebase.storage(firebaseApp);
-const authApp = firebase.auth(firebaseApp);
+// Inicializar Firebase (Compat)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+const authApp = firebase.auth();
 
 let adminUser = null;
 let todosLosTickets = [];
@@ -1368,7 +1368,7 @@ function mostrarToast(msg, tipo) {
 
 
 (async () => {
-    const { data: { session } } = await _supabase.auth.getSession();
+    let user = firebase.auth().currentUser;
     if (session?.user && session.user.email === 'ed8108868@gmail.com') {
         adminUser = session.user;
         document.getElementById('login-screen').style.display = 'none';
@@ -1378,9 +1378,9 @@ function mostrarToast(msg, tipo) {
         suscribirTicketsRealtime();
         suscribirsePresenciaUsuarios();
     } else if (session?.user) {
-        await _supabase.auth.signOut();
+        await firebase.auth().signOut();
     }
-})();
+});
 
 
 let moduloActivo = 'soporte';
@@ -1463,10 +1463,10 @@ function actualizarTarjetaEstadoSitio(suspendido, motivo) {
 
 
 async function obtenerTokenSesionValido() {
-    let { data: { session } } = await _supabase.auth.getSession();
+    let user = firebase.auth().currentUser;
 
     if (!session?.access_token) {
-        const { data: refreshData } = await _supabase.auth.refreshSession();
+        // Firebase maneja sesiones automáticamente
         session = refreshData?.session || null;
     }
 
@@ -1732,7 +1732,7 @@ async function guardarAnuncio() {
         const bucketName = tipo === 'video' ? 'anuncios-videos' : 'anuncios-imagenes';
         const path = `anuncios/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         
-        const { data: uploadData, error: uploadError } = await _supabase.storage
+        const { data: uploadData, error: uploadError } = await storage
             .from(bucketName)
             .upload(path, anuncioImagenFile, { cacheControl: '3600', upsert: false });
         if (uploadError) {
@@ -1741,7 +1741,7 @@ async function guardarAnuncio() {
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Anuncio';
             return;
         }
-        const { data: { publicUrl } } = _supabase.storage.from(bucketName).getPublicUrl(path);
+        const { data: { publicUrl } } = storage.from(bucketName).getPublicUrl(path);
         imagenUrl = publicUrl;
     }
 
@@ -1788,7 +1788,7 @@ async function eliminarAnuncio(id) {
     if (anuncio?.imagen_url) {
         const match = anuncio.imagen_url.match(/\/object\/public\/anuncios-imagenes\/(.+)$/);
         if (match) {
-            await _supabase.storage.from('anuncios-imagenes').remove([decodeURIComponent(match[1])]);
+            await storage.from('anuncios-imagenes').remove([decodeURIComponent(match[1])]);
         }
     }
 
@@ -1998,7 +1998,7 @@ async function guardarPelicula() {
     if (peliculaVideoFile) {
         const ext = peliculaVideoFile.name.split('.').pop();
         const path = `peliculas/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await _supabase.storage
+        const { error: uploadError } = await storage
             .from('peliculas-videos')
             .upload(path, peliculaVideoFile, { cacheControl: '3600', upsert: false });
         if (uploadError) {
@@ -2007,18 +2007,18 @@ async function guardarPelicula() {
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Película';
             return;
         }
-        const { data: { publicUrl } } = _supabase.storage.from('peliculas-videos').getPublicUrl(path);
+        const { data: { publicUrl } } = storage.from('peliculas-videos').getPublicUrl(path);
         videoUrl = publicUrl;
     }
 
     if (peliculaMiniaturaFile) {
         const ext = peliculaMiniaturaFile.name.split('.').pop();
         const path = `miniaturas/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await _supabase.storage
+        const { error: uploadError } = await storage
             .from('peliculas-miniaturas')
             .upload(path, peliculaMiniaturaFile, { cacheControl: '3600', upsert: false });
         if (!uploadError) {
-            const { data: { publicUrl } } = _supabase.storage.from('peliculas-miniaturas').getPublicUrl(path);
+            const { data: { publicUrl } } = storage.from('peliculas-miniaturas').getPublicUrl(path);
             miniaturaUrl = publicUrl;
         }
     }
@@ -2068,13 +2068,13 @@ async function eliminarPelicula(id) {
     if (pelicula?.video_url) {
         const match = pelicula.video_url.match(/\/object\/public\/peliculas-videos\/(.+)$/);
         if (match) {
-            await _supabase.storage.from('peliculas-videos').remove([decodeURIComponent(match[1])]);
+            await storage.from('peliculas-videos').remove([decodeURIComponent(match[1])]);
         }
     }
     if (pelicula?.miniatura_url) {
         const matchMin = pelicula.miniatura_url.match(/\/object\/public\/peliculas-miniaturas\/(.+)$/);
         if (matchMin) {
-            await _supabase.storage.from('peliculas-miniaturas').remove([decodeURIComponent(matchMin[1])]);
+            await storage.from('peliculas-miniaturas').remove([decodeURIComponent(matchMin[1])]);
         }
     }
 
@@ -2116,7 +2116,6 @@ async function cargarCanjes() {
     } catch(err) {
         console.error('Error cargando canjes:', err);
         document.getElementById('lista-canjes').innerHTML = '<p class="text-center text-red-400 py-8">Error al cargar canjes</p>';
-    }
     }
 }
 
@@ -2365,7 +2364,7 @@ function suscribirsePresenciaUsuarios() {
     if (_suscritoPresenciaUsuarios) return;
     _suscritoPresenciaUsuarios = true;
 
-    const canal = _supabase.channel('landing-realtime');
+    // Realtime listeners con Firestore
     canal
         .on('presence', { event: 'sync' }, () => {
             const estado = canal.presenceState();
@@ -2710,14 +2709,14 @@ async function guardarBanner() {
         // Si hay archivo nuevo, subir
         if (bannerImagenFile) {
             const nombreArchivo = `banner_${Date.now()}_${bannerImagenFile.name}`;
-            const { error: uploadError } = await _supabase.storage
+            const { error: uploadError } = await storage
                 .from('banners')
                 .upload(nombreArchivo, bannerImagenFile);
 
             if (uploadError) throw uploadError;
 
             // Obtener URL pública
-            const { data } = _supabase.storage
+            const { data } = storage
                 .from('banners')
                 .getPublicUrl(nombreArchivo);
             urlImagen = data.publicUrl;
